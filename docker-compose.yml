@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: softticket_postgres
+    environment:
+      POSTGRES_DB: SoftTicket
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: enessene
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - softticket_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: softticket_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - softticket_network
+
+  # pgAdmin (Database Management - Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: softticket_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@softticket.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - softticket_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  softticket_network:
+    driver: bridge
