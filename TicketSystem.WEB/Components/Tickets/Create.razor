@@ -1,0 +1,689 @@
+﻿@page "/tickets/create"
+
+<PageTitle>Yeni Destek Talebi - SoftDesk</PageTitle>
+
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900 mb-2">Yeni Destek Talebi</h1>
+            <p class="text-gray-600">Destek talebinizi oluşturmak için aşağıdaki adımları takip edin</p>
+        </div>
+        <a href="/tickets" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Taleplerime Dön
+        </a>
+    </div>
+</div>
+
+<!-- Debug Info -->
+<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
+    <div class="text-sm">
+        <p><strong>Debug:</strong> CurrentStep: @CurrentStep</p>
+        <p>SelectedTicketType: @(SelectedTicketType?.Name ?? "None")</p>
+        <p>SelectedCategory: @(SelectedCategory?.Name ?? "None")</p>
+        <p>CanProceed: @CanProceedToNextStep()</p>
+    </div>
+</div>
+
+<!-- Step Indicator -->
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
+    <div class="flex items-center justify-between">
+        @for (int i = 1; i <= 4; i++)
+        {
+            <div class="flex items-center @(i < 4 ? "flex-1" : "")">
+                <!-- Step Circle -->
+                <div class="flex items-center justify-center w-10 h-10 rounded-full @GetStepClass(i) transition-colors duration-200">
+                    @if (CurrentStep > i)
+                    {
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <span class="text-sm font-medium">@i</span>
+                    }
+                </div>
+
+                <!-- Step Info -->
+                <div class="ml-3 @(i < 4 ? "flex-1" : "")">
+                    <p class="text-sm font-medium @(CurrentStep >= i ? "text-gray-900" : "text-gray-500")">@GetStepTitle(i)</p>
+                    <p class="text-xs text-gray-500">@GetStepDescription(i)</p>
+                </div>
+
+                <!-- Connector Line -->
+                @if (i < 4)
+                {
+                    <div class="flex-1 h-0.5 mx-4 @(CurrentStep > i ? "bg-blue-600" : "bg-gray-200") transition-colors duration-200"></div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Step Content -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    @if (CurrentStep == 1)
+    {
+        <!-- Step 1: Ticket Type -->
+        <div class="p-8">
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">Talep Türü</h2>
+                <p class="text-gray-600">Ne tür bir destek?</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @for (int i = 0; i < AvailableTicketTypes.Count; i++)
+                {
+                    var index = i;
+                    var ticketType = AvailableTicketTypes[index];
+                    <div class="@GetTicketTypeCardClass(ticketType) border-2 rounded-xl p-6 transition-all duration-200">
+                        <div class="@GetTicketTypeIconClass(ticketType) rounded-xl flex items-center justify-center mb-4">
+                            @((MarkupString)ticketType.Icon)
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">@ticketType.Name</h3>
+                        <p class="text-sm text-gray-600 mb-3">@ticketType.Description</p>
+                        <div class="flex items-center text-xs @GetTicketTypeTextClass(ticketType) mb-4">
+                            <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            @ticketType.ResponseTime
+                        </div>
+
+                        <button type="button"
+                                class="w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors @(SelectedTicketType?.Id == ticketType.Id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200")"
+                                @onclick="@(() => HandleTicketTypeSelect(index))">
+                            @if (SelectedTicketType?.Id == ticketType.Id)
+                            {
+                                <span>✓ Seçildi</span>
+                            }
+                            else
+                            {
+                                <span>Seç</span>
+                            }
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (CurrentStep == 2)
+    {
+        <!-- Step 2: Category -->
+        <div class="p-8">
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">Kategori</h2>
+                <p class="text-gray-600">Hangi sistem?</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @for (int i = 0; i < GetCategoriesForType(SelectedTicketType?.Id ?? 0).Count; i++)
+                {
+                    var index = i;
+                    var category = GetCategoriesForType(SelectedTicketType?.Id ?? 0)[index];
+                    <div class="@GetCategoryCardClass(category) border-2 rounded-xl p-6 transition-all duration-200">
+                        <div class="flex items-center mb-4">
+                            <div class="@GetCategoryIconClass(category) rounded-lg flex items-center justify-center mr-3">
+                                @((MarkupString)category.Icon)
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">@category.Name</h3>
+                                <p class="text-sm text-gray-600">@category.Description</p>
+                            </div>
+                        </div>
+
+                        @if (category.SubModules.Any())
+                        {
+                            <div class="space-y-2 mb-4">
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Alt Modüller:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach (var module in category.SubModules)
+                                    {
+                                        <span class="@GetCategoryModuleClass(category)">
+                                            @module
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <button type="button"
+                                class="w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors @(SelectedCategory?.Id == category.Id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200")"
+                                @onclick="@(() => HandleCategorySelect(index))">
+                            @if (SelectedCategory?.Id == category.Id)
+                            {
+                                <span>✓ Seçildi</span>
+                            }
+                            else
+                            {
+                                <span>Seç</span>
+                            }
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (CurrentStep == 3)
+    {
+        <!-- Step 3: Details Form -->
+        <div class="p-8">
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">Detaylar</h2>
+                <p class="text-gray-600">Bilgileri girin</p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Subject -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Konu Başlığı *</label>
+                    <input type="text" @bind="TicketSubject" placeholder="Asil yardımcı olabilirz?"
+                           class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Detaylı Açıklama *</label>
+                    <textarea @bind="TicketDescription" rows="4" placeholder="Destek ihtiyacınızı detaylı şekilde açıklayın..."
+                              class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+
+                <!-- Selected Module -->
+                @if (SelectedCategory != null && SelectedCategory.SubModules.Any())
+                {
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Etkilenen Modül/Sistem</label>
+                        <select @bind="SelectedModule" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Hangi modül etkileniyor?</option>
+                            @foreach (var module in SelectedCategory.SubModules)
+                            {
+                                <option value="@module">@module</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                <!-- File Upload -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dosya Eki</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                        <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="text-sm text-gray-600 mb-1">
+                            <button class="text-blue-600 hover:text-blue-500 font-medium">Dosyaları Seç</button>
+                            veya sürükle bırak
+                        </p>
+                        <p class="text-xs text-gray-500">JPG, PNG, PDF, DOC, TXT, ZIP (Maksimum 10MB)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (CurrentStep == 4)
+    {
+        <!-- Step 4: Preview -->
+        <div class="p-8">
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">Önizleme</h2>
+                <p class="text-gray-600">Kontrol & gönder</p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Summary Card -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 @GetTicketTypeIconClass(SelectedTicketType ?? new TicketTypeData()) rounded-lg flex items-center justify-center mr-3">
+                                @((MarkupString)(SelectedTicketType?.Icon ?? ""))
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">@TicketSubject</h3>
+                                <p class="text-sm text-gray-600">@SelectedTicketType?.Name - @SelectedCategory?.Name</p>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Yeni Talep
+                        </span>
+                    </div>
+
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <span class="font-medium text-gray-700">Açıklama:</span>
+                            <p class="text-gray-600 mt-1">@TicketDescription</p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(SelectedModule))
+                        {
+                            <div>
+                                <span class="font-medium text-gray-700">Etkilenen Modül:</span>
+                                <span class="text-gray-600 ml-2">@SelectedModule</span>
+                            </div>
+                        }
+
+                        <div>
+                            <span class="font-medium text-gray-700">Beklenen Yanıt Süresi:</span>
+                            <span class="@GetTicketTypeTextClass(SelectedTicketType ?? new TicketTypeData()) ml-2 font-medium">@SelectedTicketType?.ResponseTime</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Info -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p class="font-medium text-yellow-800">Önemli Bilgi:</p>
+                            <p class="text-sm text-yellow-700">Talebiniz oluşturduktan sonra e-posta adresinize onay göndereceğiz. Destek ekibimiz en kısa sürede geri dönüş yapacaktır.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Navigation Buttons -->
+    <div class="border-t border-gray-200 px-8 py-6">
+        <div class="flex items-center justify-between">
+            <button @onclick="PreviousStep"
+                    class="@(CurrentStep == 1 ? "invisible" : "") inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Önceki
+            </button>
+
+            @if (CurrentStep < 4)
+            {
+                <button @onclick="NextStep"
+                        disabled="@(!CanProceedToNextStep())"
+                        class="@(CanProceedToNextStep() ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700" : "bg-gray-300 cursor-not-allowed") inline-flex items-center px-6 py-2 border border-transparent rounded-lg text-sm font-medium text-white shadow-sm transition-all duration-200">
+                    Sonraki
+                    <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </button>
+            }
+            else
+            {
+                <button @onclick="CreateTicket"
+                        disabled="@(!CanCreateTicket())"
+                        class="@(CanCreateTicket() ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700" : "bg-gray-300 cursor-not-allowed") inline-flex items-center px-6 py-2 border border-transparent rounded-lg text-sm font-medium text-white shadow-sm transition-all duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Talep Gönder
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    // Current state
+    private int CurrentStep = 1;
+    private TicketTypeData? SelectedTicketType;
+    private CategoryData? SelectedCategory;
+    private string TicketSubject = "";
+    private string TicketDescription = "";
+    private string SelectedModule = "";
+
+    // Available data
+    private List<TicketTypeData> AvailableTicketTypes = new();
+    private List<CategoryData> AllCategories = new();
+
+    protected override void OnInitialized()
+    {
+        LoadTicketTypes();
+        LoadCategories();
+    }
+
+    #region Data Loading
+    private void LoadTicketTypes()
+    {
+        AvailableTicketTypes = new List<TicketTypeData>
+        {
+            new TicketTypeData
+            {
+                Id = 1,
+                Name = "ERP Sistemi",
+                Description = "Muhasebe, Stok, Satış",
+                Color = "orange",
+                ResponseTime = "24 saat içinde yanıt",
+                Icon = @"<svg class=""w-6 h-6 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor"">
+                           <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"" />
+                         </svg>"
+            },
+            new TicketTypeData
+            {
+                Id = 2,
+                Name = "Lopus",
+                Description = "Personel",
+                Color = "gray",
+                ResponseTime = "4 saat içinde yanıt",
+                Icon = @"<svg class=""w-6 h-6 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor"">
+                           <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"" />
+                         </svg>"
+            },
+            new TicketTypeData
+            {
+                Id = 3,
+                Name = "CRM",
+                Description = "Müşteri ilişkileri yönetimi",
+                Color = "teal",
+                ResponseTime = "2 saat içinde yanıt",
+                Icon = @"<svg class=""w-6 h-6 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor"">
+                           <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"" />
+                         </svg>"
+            }
+        };
+    }
+
+    private void LoadCategories()
+    {
+        AllCategories = new List<CategoryData>
+        {
+            new CategoryData
+            {
+                Id = 1,
+                TicketTypeId = 1,
+                Name = "ERP Sistemi",
+                Description = "Ana ERP modülleri",
+                Color = "orange",
+                Icon = @"<svg class=""w-5 h-5 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"" /></svg>",
+                SubModules = new List<string> { "Muhasebe", "Stok Yönetimi", "Satış", "Satın Alma", "Raporlama", "Kullanıcı Yetkileri" }
+            },
+            new CategoryData
+            {
+                Id = 2,
+                TicketTypeId = 2,
+                Name = "Lopus",
+                Description = "Personel yönetim sistemi",
+                Color = "gray",
+                Icon = @"<svg class=""w-5 h-5 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"" /></svg>",
+                SubModules = new List<string> { "Personel Kayıtları", "Bordro", "İzin Takibi", "Performans", "Eğitim Kayıtları" }
+            },
+            new CategoryData
+            {
+                Id = 3,
+                TicketTypeId = 3,
+                Name = "CRM",
+                Description = "Müşteri ilişkileri yönetimi",
+                Color = "teal",
+                Icon = @"<svg class=""w-5 h-5 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"" /></svg>",
+                SubModules = new List<string> { "Müşteri Kartları", "Fırsat Takibi", "Kampanya Yönetimi", "Satış Raporları", "İletişim Geçmişi" }
+            }
+        };
+    }
+    #endregion
+
+    #region CSS Helper Methods
+    private string GetTicketTypeCardClass(TicketTypeData ticketType)
+    {
+        return SelectedTicketType?.Id == ticketType.Id
+            ? GetSelectedCardClass(ticketType.Color)
+            : "hover:bg-gray-50";
+    }
+
+    private string GetTicketTypeIconClass(TicketTypeData ticketType)
+    {
+        return $"w-12 h-12 {GetIconBackgroundClass(ticketType.Color)}";
+    }
+
+    private string GetTicketTypeTextClass(TicketTypeData ticketType)
+    {
+        return GetTextColorClass(ticketType.Color);
+    }
+
+    private string GetCategoryCardClass(CategoryData category)
+    {
+        return SelectedCategory?.Id == category.Id
+            ? "ring-2 ring-blue-500 bg-blue-50"
+            : "hover:bg-gray-50";
+    }
+
+    private string GetCategoryIconClass(CategoryData category)
+    {
+        return $"w-10 h-10 {GetIconBackgroundClass(category.Color)}";
+    }
+
+    private string GetCategoryModuleClass(CategoryData category)
+    {
+        return $"inline-flex items-center px-2 py-1 rounded-md text-xs font-medium {GetModuleBadgeClass(category.Color)}";
+    }
+
+    private string GetSelectedCardClass(string color)
+    {
+        return color switch
+        {
+            "orange" => "ring-2 ring-orange-500 bg-orange-50",
+            "gray" => "ring-2 ring-gray-500 bg-gray-50",
+            "teal" => "ring-2 ring-teal-500 bg-teal-50",
+            "red" => "ring-2 ring-red-500 bg-red-50",
+            "blue" => "ring-2 ring-blue-500 bg-blue-50",
+            "green" => "ring-2 ring-green-500 bg-green-50",
+            _ => "ring-2 ring-blue-500 bg-blue-50"
+        };
+    }
+
+    private string GetIconBackgroundClass(string color)
+    {
+        return color switch
+        {
+            "orange" => "bg-orange-500",
+            "gray" => "bg-gray-500",
+            "teal" => "bg-teal-500",
+            "red" => "bg-red-500",
+            "blue" => "bg-blue-500",
+            "green" => "bg-green-500",
+            _ => "bg-blue-500"
+        };
+    }
+
+    private string GetTextColorClass(string color)
+    {
+        return color switch
+        {
+            "orange" => "text-orange-600",
+            "gray" => "text-gray-600",
+            "teal" => "text-teal-600",
+            "red" => "text-red-600",
+            "blue" => "text-blue-600",
+            "green" => "text-green-600",
+            _ => "text-blue-600"
+        };
+    }
+
+    private string GetModuleBadgeClass(string color)
+    {
+        return color switch
+        {
+            "orange" => "bg-orange-100 text-orange-700",
+            "gray" => "bg-gray-100 text-gray-700",
+            "teal" => "bg-teal-100 text-teal-700",
+            "red" => "bg-red-100 text-red-700",
+            "blue" => "bg-blue-100 text-blue-700",
+            "green" => "bg-green-100 text-green-700",
+            _ => "bg-blue-100 text-blue-700"
+        };
+    }
+    #endregion
+
+    #region Step Methods
+    private string GetStepClass(int step)
+    {
+        if (CurrentStep > step)
+            return "bg-blue-600 text-white border-blue-600";
+        else if (CurrentStep == step)
+            return "bg-blue-600 text-white border-blue-600";
+        else
+            return "bg-white text-gray-500 border-gray-300";
+    }
+
+    private string GetStepTitle(int step)
+    {
+        return step switch
+        {
+            1 => "Talep Türü",
+            2 => "Kategori",
+            3 => "Detaylar",
+            4 => "Önizleme",
+            _ => ""
+        };
+    }
+
+    private string GetStepDescription(int step)
+    {
+        return step switch
+        {
+            1 => "Ne tür bir destek?",
+            2 => "Hangi sistem?",
+            3 => "Bilgileri girin",
+            4 => "Kontrol & gönder",
+            _ => ""
+        };
+    }
+    #endregion
+
+    #region Navigation Methods - BASIT VE GARANTİLİ
+    private void NextStep()
+    {
+        Console.WriteLine($"NextStep called! Current: {CurrentStep}, CanProceed: {CanProceedToNextStep()}");
+
+        if (CanProceedToNextStep() && CurrentStep < 4)
+        {
+            CurrentStep++;
+            Console.WriteLine($"Moved to step: {CurrentStep}");
+        }
+    }
+
+    private void PreviousStep()
+    {
+        if (CurrentStep > 1)
+        {
+            CurrentStep--;
+            Console.WriteLine($"Moved back to step: {CurrentStep}");
+        }
+    }
+
+    private bool CanProceedToNextStep()
+    {
+        var canProceed = CurrentStep switch
+        {
+            1 => SelectedTicketType != null,
+            2 => SelectedCategory != null,
+            3 => !string.IsNullOrWhiteSpace(TicketSubject) && !string.IsNullOrWhiteSpace(TicketDescription),
+            _ => false
+        };
+
+        return canProceed;
+    }
+
+    private bool CanCreateTicket()
+    {
+        return !string.IsNullOrWhiteSpace(TicketSubject) &&
+               !string.IsNullOrWhiteSpace(TicketDescription) &&
+               SelectedTicketType != null &&
+               SelectedCategory != null;
+    }
+    #endregion
+
+    #region Selection Methods - BASIT VE GARANTİLİ
+    private void HandleTicketTypeSelect(int index)
+    {
+        Console.WriteLine($"BUTTON CLICKED! Index: {index}");
+
+        if (index >= 0 && index < AvailableTicketTypes.Count)
+        {
+            var ticketType = AvailableTicketTypes[index];
+            SelectedTicketType = ticketType;
+            SelectedCategory = null;
+            SelectedModule = "";
+
+            Console.WriteLine($"SUCCESS! Selected: {ticketType.Name}");
+        }
+        else
+        {
+            Console.WriteLine($"ERROR! Invalid index: {index}");
+        }
+    }
+
+    private void HandleCategorySelect(int index)
+    {
+        Console.WriteLine($"CATEGORY BUTTON CLICKED! Index: {index}");
+
+        var categories = GetCategoriesForType(SelectedTicketType?.Id ?? 0);
+        if (index >= 0 && index < categories.Count)
+        {
+            var category = categories[index];
+            SelectedCategory = category;
+            SelectedModule = "";
+
+            Console.WriteLine($"SUCCESS! Selected Category: {category.Name}");
+        }
+        else
+        {
+            Console.WriteLine($"ERROR! Invalid category index: {index}");
+        }
+    }
+    #endregion
+
+    #region Data Methods
+    private List<CategoryData> GetCategoriesForType(int ticketTypeId)
+    {
+        return AllCategories.Where(c => c.TicketTypeId == ticketTypeId).ToList();
+    }
+    #endregion
+
+    #region Create Ticket
+    private async Task CreateTicket()
+    {
+        if (!CanCreateTicket()) return;
+
+        Console.WriteLine($"Creating ticket: {TicketSubject}");
+        await Task.Delay(1000);
+
+        // Reset form or navigate
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        CurrentStep = 1;
+        SelectedTicketType = null;
+        SelectedCategory = null;
+        TicketSubject = "";
+        TicketDescription = "";
+        SelectedModule = "";
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Models
+    public class TicketTypeData
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Color { get; set; } = "";
+        public string ResponseTime { get; set; } = "";
+        public string Icon { get; set; } = "";
+    }
+
+    public class CategoryData
+    {
+        public int Id { get; set; }
+        public int TicketTypeId { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Color { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public List<string> SubModules { get; set; } = new();
+    }
+    #endregion
+}

@@ -1,7 +1,51 @@
 ﻿@page "/"
+@using TicketSystem.WEB.Components.Dashboard
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard - SoftDesk</PageTitle>
 
-<h1>Hello, world!</h1>
+<!-- Welcome Section -->
+<div class="mb-8">
+    <h1 class="text-2xl font-semibold text-gray-900 mb-2">Merhaba, BANAT FIRÇA VE PLASTİK SAN. A.Ş.!</h1>
+    <p class="text-gray-600">Ticket sisteminize hoş geldiniz. Aşağıda güncel durumunuzu görebilirsiniz.</p>
+</div>
 
-Welcome to your new app.
+<!-- Stats Cards Component -->
+<StatsCards TotalTickets="42"
+            PendingTickets="29"
+            InProgressTickets="3"
+            ResolvedTickets="1"
+            ClosedTickets="9"
+            ResolvedPercentage="2.4m" />
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Ticket Type Analysis Component -->
+    <TicketTypeAnalysis MostPopularType="Genel Destek" MostPopularCount="19" />
+
+    <!-- Son Ticketlar -->
+    <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Son Ticketlar</h3>
+            <p class="text-gray-600 text-sm">Son 2 günde açılan ticket bulunmuyor</p>
+        </div>
+
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <h3 class="text-sm font-medium text-gray-900 mb-2">Henüz ticket yok</h3>
+            <p class="text-sm text-gray-500 mb-6">Yeni bir destek talebi oluşturmak için başlayın.</p>
+            <a href="/tickets/create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Yeni Ticket Oluştur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Component -->
+<QuickActions />

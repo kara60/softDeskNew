@@ -1,0 +1,323 @@
+﻿@page "/tickets"
+
+<PageTitle>Taleplerim - SoftDesk</PageTitle>
+
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900 mb-2">Destek Taleplerim</h1>
+            <p class="text-gray-600">Tüm taleplerinizi takip edin ve kontrol edin</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="text-sm text-gray-500">@FilteredTickets.Count() talep</span>
+            <a href="/tickets/create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all duration-200">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Yeni Talep Oluştur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Search -->
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Ticket ara</label>
+            <div class="relative">
+                <input type="text" @bind="SearchTerm" @bind:event="oninput" placeholder="Ticket numarası, konu veya açıklama..."
+                       class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Durum</label>
+            <select @bind="SelectedStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">Tüm Durumlar</option>
+                <option value="Pending">İnceleniyor</option>
+                <option value="InProgress">İşlemde</option>
+                <option value="Resolved">Çözüldü</option>
+                <option value="Closed">Kapandı</option>
+            </select>
+        </div>
+
+        <!-- Type Filter -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tip</label>
+            <select @bind="SelectedType" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">Tüm Tipler</option>
+                <option value="Bug">Hata/Sorun</option>
+                <option value="Feature">Yeni Özellik</option>
+                <option value="Support">Genel Destek</option>
+                <option value="Training">Danışmanlık/Eğitim</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Tickets List -->
+@if (FilteredTickets.Any())
+{
+    <div class="space-y-4">
+        @foreach (var ticket in FilteredTickets)
+        {
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-start justify-between">
+                    <!-- Ticket Info -->
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 bg-@(GetTypeColor(ticket.Type))-50 rounded-xl flex items-center justify-center">
+                                @((MarkupString)GetTypeIcon(ticket.Type))
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">@ticket.Subject</h3>
+                                <p class="text-sm text-gray-500">#@ticket.TicketNumber</p>
+                            </div>
+                        </div>
+
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">@ticket.Description</p>
+
+                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                @ticket.CreatedDate.ToString("dd.MM.yyyy")
+                            </span>
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a2 2 0 012-2z" />
+                                </svg>
+                                @GetTypeDisplayName(ticket.Type)
+                            </span>
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z" />
+                                </svg>
+                                @ticket.CommentsCount yorum
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Status & Actions -->
+                    <div class="flex flex-col items-end space-y-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium @GetStatusBadgeClass(ticket.Status)">
+                            @GetStatusDisplayName(ticket.Status)
+                        </span>
+
+                        <div class="flex items-center space-x-2">
+                            @if (ticket.Status == "Resolved")
+                            {
+                                <button class="inline-flex items-center px-3 py-1 border border-green-300 text-xs font-medium rounded-lg text-green-700 bg-green-50 hover:bg-green-100 transition-colors">
+                                    <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Talebi Kapat
+                                </button>
+                            }
+                            <a href="/tickets/@ticket.Id" class="inline-flex items-center px-3 py-1 border border-blue-300 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                                <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Detay
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <!-- Empty State -->
+    <div class="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center">
+        <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Henüz ticket bulunamadı</h3>
+        <p class="text-gray-500 mb-6">@(string.IsNullOrEmpty(SearchTerm) ? "Henüz hiç destek talebi oluşturmamışsınız." : "Arama kriterlerinize uygun ticket bulunamadı.")</p>
+        <a href="/tickets/create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            İlk Ticket'ınızı Oluşturun
+        </a>
+    </div>
+}
+
+@code {
+    private string SearchTerm = "";
+    private string SelectedStatus = "";
+    private string SelectedType = "";
+
+    private List<TicketListItem> AllTickets = new();
+
+    protected override void OnInitialized()
+    {
+        LoadSampleData();
+    }
+
+    private IEnumerable<TicketListItem> FilteredTickets
+    {
+        get
+        {
+            var filtered = AllTickets.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                filtered = filtered.Where(t =>
+                    t.Subject.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    t.Description.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    t.TicketNumber.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedStatus))
+            {
+                filtered = filtered.Where(t => t.Status == SelectedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedType))
+            {
+                filtered = filtered.Where(t => t.Type == SelectedType);
+            }
+
+            return filtered.OrderByDescending(t => t.CreatedDate);
+        }
+    }
+
+    private void LoadSampleData()
+    {
+        AllTickets = new List<TicketListItem>
+        {
+            new TicketListItem
+            {
+                Id = 1,
+                TicketNumber = "TKT-00891",
+                Subject = "ERP Sistemi Muhasebe Sorunu",
+                Description = "Muhasebe modülünde fatura kaydederken hata alıyorum. Sistem donuyor ve kayıt işlemi tamamlanmıyor.",
+                Status = "Resolved",
+                Type = "Bug",
+                CreatedDate = DateTime.Now.AddDays(-5),
+                CommentsCount = 3
+            },
+            new TicketListItem
+            {
+                Id = 2,
+                TicketNumber = "TKT-00892",
+                Subject = "CRM Müşteri Veri Aktarımı",
+                Description = "Eski sistemden yeni CRM'e müşteri verilerini aktarmak istiyorum. Hangi format kullanmalıyım?",
+                Status = "InProgress",
+                Type = "Support",
+                CreatedDate = DateTime.Now.AddDays(-3),
+                CommentsCount = 7
+            },
+            new TicketListItem
+            {
+                Id = 3,
+                TicketNumber = "TKT-00893",
+                Subject = "Kullanıcı Eğitimi Talebi",
+                Description = "Yeni işe başlayan personelimiz için sistem eğitimi organize edilmesini istiyoruz.",
+                Status = "Pending",
+                Type = "Training",
+                CreatedDate = DateTime.Now.AddDays(-1),
+                CommentsCount = 1
+            },
+            new TicketListItem
+            {
+                Id = 4,
+                TicketNumber = "TKT-00894",
+                Subject = "Mobil Uygulama Özelliği",
+                Description = "Sistemin mobil versiyonunda QR kod okuma özelliği eklenebilir mi?",
+                Status = "Pending",
+                Type = "Feature",
+                CreatedDate = DateTime.Now,
+                CommentsCount = 0
+            }
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-yellow-100 text-yellow-800",
+            "InProgress" => "bg-blue-100 text-blue-800",
+            "Resolved" => "bg-green-100 text-green-800",
+            "Closed" => "bg-gray-100 text-gray-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    private string GetStatusDisplayName(string status)
+    {
+        return status switch
+        {
+            "Pending" => "İnceleniyor",
+            "InProgress" => "İşlemde",
+            "Resolved" => "Çözüldü",
+            "Closed" => "Kapandı",
+            _ => "Bilinmiyor"
+        };
+    }
+
+    private string GetTypeDisplayName(string type)
+    {
+        return type switch
+        {
+            "Bug" => "Hata/Sorun",
+            "Feature" => "Yeni Özellik",
+            "Support" => "Genel Destek",
+            "Training" => "Danışmanlık/Eğitim",
+            _ => "Diğer"
+        };
+    }
+
+    private string GetTypeColor(string type)
+    {
+        return type switch
+        {
+            "Bug" => "red",
+            "Feature" => "blue",
+            "Support" => "purple",
+            "Training" => "green",
+            _ => "gray"
+        };
+    }
+
+    private string GetTypeIcon(string type)
+    {
+        return type switch
+        {
+            "Bug" => @"<svg class=""w-5 h-5 text-red-500"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"" /></svg>",
+            "Feature" => @"<svg class=""w-5 h-5 text-blue-500"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"" /></svg>",
+            "Support" => @"<svg class=""w-5 h-5 text-purple-500"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"" /></svg>",
+            "Training" => @"<svg class=""w-5 h-5 text-green-500"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"" /></svg>",
+            _ => @"<svg class=""w-5 h-5 text-gray-500"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"" /></svg>"
+        };
+    }
+
+    public class TicketListItem
+    {
+        public int Id { get; set; }
+        public string TicketNumber { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Type { get; set; } = "";
+        public DateTime CreatedDate { get; set; }
+        public int CommentsCount { get; set; }
+    }
+}

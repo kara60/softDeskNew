@@ -1,0 +1,76 @@
+﻿<!-- Quick Actions Component -->
+<div class="mt-8 bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+    <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">@Title</h3>
+        <p class="text-gray-600 text-sm">@Description</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        @foreach (var action in Actions)
+        {
+            <a href="@action.Url" class="group p-6 bg-@(action.Color)-50 rounded-xl border border-@(action.Color)-100 hover:bg-@(action.Color)-100 transition-all duration-200 hover:scale-105">
+                <div class="w-12 h-12 bg-@(action.Color)-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+                    @((MarkupString)action.Icon)
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2 group-hover:text-@(action.Color)-600 transition-colors">@action.Title</h3>
+                <p class="text-sm text-gray-600">@action.Description</p>
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Hızlı İşlemler";
+    [Parameter] public string Description { get; set; } = "Sık kullanılan işlemleriniz";
+    [Parameter] public List<QuickActionData> Actions { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        // Default actions if not provided
+        if (!Actions.Any())
+        {
+            Actions = new List<QuickActionData>
+            {
+                new QuickActionData
+                {
+                    Title = "Tüm Ticketları Görüntüle",
+                    Description = "Açtığınız tüm destek taleplerini inceleyin ve takip edin.",
+                    Url = "/tickets",
+                    Color = "blue",
+                    Icon = @"<svg class=""w-6 h-6 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor"">
+                               <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"" />
+                             </svg>"
+                },
+                new QuickActionData
+                {
+                    Title = "Yeni Ticket Oluştur",
+                    Description = "Yeni bir destek talebi oluşturun ve ekibimizden yardım alın.",
+                    Url = "/tickets/create",
+                    Color = "green",
+                    Icon = @"<svg class=""w-6 h-6 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor"">
+                               <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 6v6m0 0v6m0-6h6m-6 0H6"" />
+                             </svg>"
+                },
+                new QuickActionData
+                {
+                    Title = "Detaylı Raporlar",
+                    Description = "Ticket geçmişiniz ve detaylı raporlarınıza erişin.",
+                    Url = "/reports",
+                    Color = "purple",
+                    Icon = @"<svg class=""w-6 h-6 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor"">
+                               <path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"" />
+                             </svg>"
+                }
+            };
+        }
+    }
+
+    public class QuickActionData
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string Color { get; set; } = "";
+        public string Icon { get; set; } = "";
+    }
+}
