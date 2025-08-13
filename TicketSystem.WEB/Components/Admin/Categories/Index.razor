@@ -1,5 +1,671 @@
-﻿<h3>Index</h3>
+﻿@* @page "/admin/categories"
+@rendermode InteractiveServer
+
+<PageTitle>Kategori Yönetimi - SoftDesk Admin</PageTitle>
+
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900 mb-2">Kategori & Modül Yönetimi</h1>
+            <p class="text-gray-600">Ticket kategorilerini ve alt modüllerini tanımlayın</p>
+        </div>
+        <button @onclick="OpenCreateModal" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-sm transition-all duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Yeni Kategori
+        </button>
+    </div>
+</div>
+
+<!-- Categories List -->
+<div class="space-y-6">
+    @foreach (var category in Categories.OrderBy(c => c.SortOrder))
+    {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Category Header -->
+            <div class="bg-gradient-to-r @GetCategoryGradient(category.Color) p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
+                            <span class="text-2xl">@category.Icon</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white mb-1">@category.Name</h3>
+                            <p class="text-white text-opacity-90 text-sm">@category.Description</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white bg-opacity-20 text-white">
+                            @category.Modules.Count modül
+                        </span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium @(category.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                            @(category.IsActive ? "Aktif" : "Pasif")
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <button @onclick="@(() => ManageModules(category))" class="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-white transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modules Grid -->
+            <div class="p-6">
+                @if (category.Modules.Any())
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach (var module in category.Modules.OrderBy(m => m.SortOrder))
+                        {
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:bg-gray-100 transition-colors">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded-lg flex items-center justify-center mr-3" style="background-color: @module.Color;">
+                                            <span class="text-lg">@module.Icon</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-gray-900 text-sm">@module.Name</h4>
+                                            <p class="text-xs text-gray-600">@module.Description</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <button @onclick="@(() => EditModule(module))" class="text-blue-600 hover:text-blue-800 p-1">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <button @onclick="@(() => DeleteModule(module))" class="text-red-600 hover:text-red-800 p-1">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-500">Sıra: @module.SortOrder</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(module.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                                        @(module.IsActive ? "Aktif" : "Pasif")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                        <!-- Add Module Button -->
+                        <div class="bg-gray-50 rounded-xl p-4 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors cursor-pointer flex items-center justify-center"
+                             @onclick="@(() => AddModuleToCategory(category))">
+                            <div class="text-center">
+                                <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <p class="text-sm text-gray-600 font-medium">Modül Ekle</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Bu kategoride henüz modül yok</h3>
+                        <p class="text-gray-500 mb-4">@category.Name kategorisi için modüller ekleyin</p>
+                        <button @onclick="@(() => AddModuleToCategory(category))" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            İlk Modülü Ekle
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <!-- Category Actions -->
+            <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-500">
+                        Oluşturulma: @category.CreatedAt.ToString("dd.MM.yyyy") • Sıra: @category.SortOrder
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button @onclick="@(() => ToggleCategoryStatus(category))" class="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            @(category.IsActive ? "Pasifleştir" : "Aktifleştir")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Create/Edit Category Modal -->
+@if (ShowCategoryModal)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @onclick="CloseCategoryModal"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-6 pt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            @(IsEditingCategory ? "Kategori Düzenle" : "Yeni Kategori")
+                        </h3>
+                        <button @onclick="CloseCategoryModal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Adı *</label>
+                            <input type="text" @bind="CurrentCategory.Name" placeholder="ERP Sistemi"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
+                            <textarea @bind="CurrentCategory.Description" rows="3" placeholder="Bu kategorinin ne için kullanıldığını açıklayın..."
+                                      class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+                        </div>
+
+                        <!-- Icon & Color -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">İkon</label>
+                                <div class="grid grid-cols-5 gap-2">
+                                    @foreach (var icon in AvailableIcons)
+                                    {
+                                        <button type="button" @onclick="@(() => CurrentCategory.Icon = icon)"
+                                                class="w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg hover:bg-gray-50 @(CurrentCategory.Icon == icon ? "border-green-500 bg-green-50" : "border-gray-200")">
+                                            @icon
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Renk</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    @foreach (var color in AvailableColors)
+                                    {
+                                        <button type="button" @onclick="@(() => CurrentCategory.Color = color.Value)"
+                                                class="w-10 h-10 rounded-lg border-2 @(CurrentCategory.Color == color.Value ? "border-gray-800" : "border-gray-200")"
+                                                style="background-color: @color.Value" title="@color.Name">
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs font-medium text-gray-500 mb-2">Önizleme:</p>
+                            <div class="bg-gradient-to-r @GetCategoryGradient(CurrentCategory.Color) p-4 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-xl">@CurrentCategory.Icon</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-white">@(!string.IsNullOrEmpty(CurrentCategory.Name) ? CurrentCategory.Name : "Kategori Adı")</h4>
+                                        <p class="text-white text-opacity-90 text-sm">@(!string.IsNullOrEmpty(CurrentCategory.Description) ? CurrentCategory.Description : "Açıklama buraya gelecek")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sort Order -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sıralama</label>
+                            <input type="number" @bind="CurrentCategory.SortOrder"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3">
+                    <button @onclick="CloseCategoryModal" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        İptal
+                    </button>
+                    <button @onclick="SaveCategory" disabled="@IsSaving" class="@(IsSaving ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700") px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white transition-colors">
+                        @(IsSaving ? "Kaydediliyor..." : (IsEditingCategory ? "Güncelle" : "Kaydet"))
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Module Modal -->
+@if (ShowModuleModal)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @onclick="CloseModuleModal"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-6 pt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            @(IsEditingModule ? "Modül Düzenle" : $"{SelectedCategoryForModule?.Name} - Yeni Modül")
+                        </h3>
+                        <button @onclick="CloseModuleModal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Modül Adı *</label>
+                            <input type="text" @bind="CurrentModule.Name" placeholder="Muhasebe Modülü"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
+                            <textarea @bind="CurrentModule.Description" rows="3" placeholder="Bu modülün ne için kullanıldığını açıklayın..."
+                                      class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+
+                        <!-- Icon & Color -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">İkon</label>
+                                <div class="grid grid-cols-5 gap-2">
+                                    @foreach (var icon in ModuleIcons)
+                                    {
+                                        <button type="button" @onclick="@(() => CurrentModule.Icon = icon)"
+                                                class="w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg hover:bg-gray-50 @(CurrentModule.Icon == icon ? "border-blue-500 bg-blue-50" : "border-gray-200")">
+                                            @icon
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Renk</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    @foreach (var color in ModuleColors)
+                                    {
+                                        <button type="button" @onclick="@(() => CurrentModule.Color = color.Value)"
+                                                class="w-10 h-10 rounded-lg border-2 @(CurrentModule.Color == color.Value ? "border-gray-800" : "border-gray-200")"
+                                                style="background-color: @color.Value" title="@color.Name">
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-xs font-medium text-gray-500 mb-2">Önizleme:</p>
+                            <div class="bg-gray-100 rounded-lg p-3">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center mr-3" style="background-color: @CurrentModule.Color;">
+                                        <span class="text-lg">@CurrentModule.Icon</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900 text-sm">@(!string.IsNullOrEmpty(CurrentModule.Name) ? CurrentModule.Name : "Modül Adı")</h4>
+                                        <p class="text-xs text-gray-600">@(!string.IsNullOrEmpty(CurrentModule.Description) ? CurrentModule.Description : "Açıklama buraya gelecek")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sort Order -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sıralama</label>
+                            <input type="number" @bind="CurrentModule.SortOrder"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3">
+                    <button @onclick="CloseModuleModal" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        İptal
+                    </button>
+                    <button @onclick="SaveModule" disabled="@IsSaving" class="@(IsSaving ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700") px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white transition-colors">
+                        @(IsSaving ? "Kaydediliyor..." : (IsEditingModule ? "Güncelle" : "Kaydet"))
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
+    private List<CategoryData> Categories = new();
+    private CategoryData CurrentCategory = new();
+    private ModuleData CurrentModule = new();
+    private CategoryData? SelectedCategoryForModule;
 
-}
+    private bool ShowCategoryModal = false;
+    private bool ShowModuleModal = false;
+    private bool IsEditingCategory = false;
+    private bool IsEditingModule = false;
+    private bool IsSaving = false;
+
+    private readonly List<string> AvailableIcons = new()
+    {
+        "💼", "🏢", "📊", "💰", "📈", "🛒", "📦", "🎯", "⚙️", "🔧",
+        "💻", "📱", "🌐", "📋", "📝", "📄", "📁", "🗂️", "📌", "🔍"
+    };
+
+    private readonly List<ColorOption> AvailableColors = new()
+    {
+        new("Mavi", "#3b82f6"),
+        new("Yeşil", "#10b981"),
+        new("Turuncu", "#f97316"),
+        new("Mor", "#8b5cf6"),
+        new("Kırmızı", "#ef4444"),
+        new("İndigo", "#6366f1"),
+        new("Pembe", "#ec4899"),
+        new("Sarı", "#f59e0b")
+    };
+
+    private readonly List<string> ModuleIcons = new()
+    {
+        "💰", "📦", "📈", "🛒", "📊", "⚙️", "👥", "📋", "🔧", "💻",
+        "📱", "🌐", "📝", "📄", "📁", "🗂️", "📌", "🔍", "📑", "🎨"
+    };
+
+    private readonly List<ColorOption> ModuleColors = new()
+    {
+        new("Mavi", "#3b82f6"),
+        new("Yeşil", "#10b981"),
+        new("Turuncu", "#f97316"),
+        new("Mor", "#8b5cf6"),
+        new("Kırmızı", "#ef4444"),
+        new("Sarı", "#f59e0b")
+    };
+
+    protected override void OnInitialized()
+    {
+        LoadCategories();
+    }
+
+    private void LoadCategories()
+    {
+        Categories = new List<CategoryData>
+        {
+            new CategoryData
+            {
+                Id = Guid.NewGuid(),
+                Name = "ERP Sistemi",
+                Description = "Kurumsal kaynak planlama modülleri",
+                Icon = "💼",
+                Color = "#f97316",
+                SortOrder = 1,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-30),
+                Modules = new List<ModuleData>
+                {
+                    new ModuleData { Id = Guid.NewGuid(), Name = "Muhasebe", Description = "Mali işlemler ve raporlama", Icon = "💰", Color = "#10b981", SortOrder = 1, IsActive = true },
+                    new ModuleData { Id = Guid.NewGuid(), Name = "Stok Yönetimi", Description = "Depo ve stok takibi", Icon = "📦", Color = "#3b82f6", SortOrder = 2, IsActive = true },
+                    new ModuleData { Id = Guid.NewGuid(), Name = "Satış", Description = "Satış süreçleri", Icon = "📈", Color = "#8b5cf6", SortOrder = 3, IsActive = true }
+                }
+            },
+            new CategoryData
+            {
+                Id = Guid.NewGuid(),
+                Name = "CRM",
+                Description = "Müşteri ilişkileri yönetimi",
+                Icon = "🎯",
+                Color = "#10b981",
+                SortOrder = 2,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-25),
+                Modules = new List<ModuleData>
+                {
+                    new ModuleData { Id = Guid.NewGuid(), Name = "Müşteri Kartları", Description = "Müşteri bilgi yönetimi", Icon = "👥", Color = "#3b82f6", SortOrder = 1, IsActive = true },
+                    new ModuleData { Id = Guid.NewGuid(), Name = "Fırsat Takibi", Description = "Satış fırsatları", Icon = "🎯", Color = "#f97316", SortOrder = 2, IsActive = true }
+                }
+            },
+            new CategoryData
+            {
+                Id = Guid.NewGuid(),
+                Name = "Lopus",
+                Description = "Personel yönetim sistemi",
+                Icon = "👥",
+                Color = "#8b5cf6",
+                SortOrder = 3,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-20),
+                Modules = new List<ModuleData>
+                {
+                    new ModuleData { Id = Guid.NewGuid(), Name = "Personel", Description = "Personel bilgileri", Icon = "👤", Color = "#10b981", SortOrder = 1, IsActive = true },
+                    new ModuleData { Id = Guid.NewGuid(), Name = "Bordro", Description = "Maaş hesaplamaları", Icon = "💰", Color = "#f97316", SortOrder = 2, IsActive = true }
+                }
+            }
+        };
+    }
+
+    #region Category Operations
+    private void OpenCreateModal()
+    {
+        CurrentCategory = new CategoryData 
+        { 
+            Color = "#3b82f6", 
+            Icon = "💼",
+            SortOrder = (Categories.LastOrDefault()?.SortOrder ?? 0) + 1
+        };
+        IsEditingCategory = false;
+        ShowCategoryModal = true;
+    }
+
+    private void EditCategory(CategoryData category)
+    {
+        CurrentCategory = new CategoryData
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            Icon = category.Icon,
+            Color = category.Color,
+            SortOrder = category.SortOrder,
+            IsActive = category.IsActive
+        };
+        IsEditingCategory = true;
+        ShowCategoryModal = true;
+    }
+
+    private void CloseCategoryModal()
+    {
+        ShowCategoryModal = false;
+        CurrentCategory = new();
+    }
+
+    private async Task SaveCategory()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentCategory.Name)) return;
+
+        IsSaving = true;
+        await Task.Delay(500);
+
+        if (IsEditingCategory)
+        {
+            var existing = Categories.FirstOrDefault(c => c.Id == CurrentCategory.Id);
+            if (existing != null)
+            {
+                existing.Name = CurrentCategory.Name;
+                existing.Description = CurrentCategory.Description;
+                existing.Icon = CurrentCategory.Icon;
+                existing.Color = CurrentCategory.Color;
+                existing.SortOrder = CurrentCategory.SortOrder;
+            }
+        }
+        else
+        {
+            CurrentCategory.Id = Guid.NewGuid();
+            CurrentCategory.CreatedAt = DateTime.Now;
+            CurrentCategory.IsActive = true;
+            CurrentCategory.Modules = new List<ModuleData>();
+            Categories.Add(CurrentCategory);
+        }
+
+        IsSaving = false;
+        CloseCategoryModal();
+        StateHasChanged();
+    }
+
+    private async Task ToggleCategoryStatus(CategoryData category)
+    {
+        category.IsActive = !category.IsActive;
+        await Task.Delay(300);
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Module Operations
+    private void ManageModules(CategoryData category)
+    {
+        // This could open a separate module management view
+        Console.WriteLine($"Managing modules for category: {category.Name}");
+    }
+
+    private void AddModuleToCategory(CategoryData category)
+    {
+        SelectedCategoryForModule = category;
+        CurrentModule = new ModuleData 
+        { 
+            Color = "#3b82f6", 
+            Icon = "💰",
+            SortOrder = (category.Modules.LastOrDefault()?.SortOrder ?? 0) + 1
+        };
+        IsEditingModule = false;
+        ShowModuleModal = true;
+    }
+
+    private void EditModule(ModuleData module)
+    {
+        var category = Categories.FirstOrDefault(c => c.Modules.Contains(module));
+        if (category != null)
+        {
+            SelectedCategoryForModule = category;
+            CurrentModule = new ModuleData
+            {
+                Id = module.Id,
+                Name = module.Name,
+                Description = module.Description,
+                Icon = module.Icon,
+                Color = module.Color,
+                SortOrder = module.SortOrder,
+                IsActive = module.IsActive
+            };
+            IsEditingModule = true;
+            ShowModuleModal = true;
+        }
+    }
+
+    private void CloseModuleModal()
+    {
+        ShowModuleModal = false;
+        CurrentModule = new();
+        SelectedCategoryForModule = null;
+    }
+
+    private async Task SaveModule()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentModule.Name) || SelectedCategoryForModule == null) return;
+
+        IsSaving = true;
+        await Task.Delay(500);
+
+        if (IsEditingModule)
+        {
+            var existing = SelectedCategoryForModule.Modules.FirstOrDefault(m => m.Id == CurrentModule.Id);
+            if (existing != null)
+            {
+                existing.Name = CurrentModule.Name;
+                existing.Description = CurrentModule.Description;
+                existing.Icon = CurrentModule.Icon;
+                existing.Color = CurrentModule.Color;
+                existing.SortOrder = CurrentModule.SortOrder;
+            }
+        }
+        else
+        {
+            CurrentModule.Id = Guid.NewGuid();
+            CurrentModule.IsActive = true;
+            SelectedCategoryForModule.Modules.Add(CurrentModule);
+        }
+
+        IsSaving = false;
+        CloseModuleModal();
+        StateHasChanged();
+    }
+
+    private async Task DeleteModule(ModuleData module)
+    {
+        var category = Categories.FirstOrDefault(c => c.Modules.Contains(module));
+        if (category != null)
+        {
+            category.Modules.Remove(module);
+            await Task.Delay(300);
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+    #region Helper Methods
+    private string GetCategoryGradient(string color)
+    {
+        return color switch
+        {
+            "#3b82f6" => "from-blue-500 to-blue-600",
+            "#10b981" => "from-emerald-500 to-emerald-600",
+            "#f97316" => "from-orange-500 to-orange-600",
+            "#8b5cf6" => "from-violet-500 to-violet-600",
+            "#ef4444" => "from-red-500 to-red-600",
+            "#6366f1" => "from-indigo-500 to-indigo-600",
+            "#ec4899" => "from-pink-500 to-pink-600",
+            "#f59e0b" => "from-amber-500 to-amber-600",
+            _ => "from-blue-500 to-blue-600"
+        };
+    }
+    #endregion
+
+    #region Models
+    public class CategoryData
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Icon { get; set; } = "💼";
+        public string Color { get; set; } = "#3b82f6";
+        public int SortOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+        public List<ModuleData> Modules { get; set; } = new();
+    }
+
+    public class ModuleData
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Icon { get; set; } = "💰";
+        public string Color { get; set; } = "#3b82f6";
+        public int SortOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    public record ColorOption(string Name, string Value);
+    #endregion
+}(() => EditCategory(category))" class="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-white transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button @onclick="@ *@

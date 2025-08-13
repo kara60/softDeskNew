@@ -1,5 +1,792 @@
-﻿<h3>Index</h3>
+﻿@* @page "/admin/system-settings"
+@rendermode InteractiveServer
+
+<PageTitle>Sistem Ayarları - SoftDesk Admin</PageTitle>
+
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900 mb-2">Sistem Ayarları</h1>
+            <p class="text-gray-600">PMO entegrasyonu, e-posta ayarları ve genel sistem konfigürasyonu</p>
+        </div>
+        <button @onclick="SaveAllSettings" disabled="@IsSaving" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all duration-200">
+            @if (IsSaving)
+            {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+               
+                        }
+            else
+            {
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                
+                        }
+        </button>
+    </div>
+</div>
+
+<!-- Settings Tabs -->
+<div class="mb-8">
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+            @foreach (var tab in SettingsTabs)
+            {
+                <button @onclick="@(() => SetActiveTab(tab.Key))"
+                        class="@(ActiveTab == tab.Key ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300") whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors">
+                    @tab.Value
+                </button>
+            }
+        </nav>
+    </div>
+</div>
+
+<!-- Settings Content -->
+@if (ActiveTab == "general")
+{
+    <!-- General Settings -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Genel Ayarlar</h3>
+            <div class="space-y-4">
+                <!-- Company Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Firma Adı</label>
+                    <input type="text" @bind="Settings.CompanyName" placeholder="SoftDesk Ticket System"
+                           class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Support Email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Destek E-posta Adresi</label>
+                    <input type="email" @bind="Settings.SupportEmail" placeholder="destek@sirketiniz.com"
+                           class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Time Zone -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Saat Dilimi</label>
+                    <select @bind="Settings.TimeZone" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Turkey Standard Time">Türkiye (UTC+3)</option>
+                        <option value="UTC">UTC</option>
+                        <option value="Central European Standard Time">Orta Avrupa (UTC+1)</option>
+                    </select>
+                </div>
+
+                <!-- Language -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Varsayılan Dil</label>
+                    <select @bind="Settings.DefaultLanguage" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="tr-TR">Türkçe</option>
+                        <option value="en-US">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket Settings -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Ayarları</h3>
+            <div class="space-y-4">
+                <!-- Auto Assignment -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">Otomatik Atama</h4>
+                        <p class="text-sm text-gray-500">Yeni ticketlar otomatik olarak müsait admınlere atansın</p>
+                    </div>
+                    <button type="button" @onclick="@(() => Settings.AutoAssignTickets = !Settings.AutoAssignTickets)"
+                            class="@(Settings.AutoAssignTickets ? "bg-blue-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <span class="@(Settings.AutoAssignTickets ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                    </button>
+                </div>
+
+                <!-- Email Notifications -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">E-posta Bildirimleri</h4>
+                        <p class="text-sm text-gray-500">Ticket durum değişikliklerinde e-posta gönder</p>
+                    </div>
+                    <button type="button" @onclick="@(() => Settings.EmailNotifications = !Settings.EmailNotifications)"
+                            class="@(Settings.EmailNotifications ? "bg-blue-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <span class="@(Settings.EmailNotifications ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                    </button>
+                </div>
+
+                <!-- Default Priority -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Varsayılan Öncelik</label>
+                    <select @bind="Settings.DefaultPriority" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Low">Düşük</option>
+                        <option value="Medium">Orta</option>
+                        <option value="High">Yüksek</option>
+                        <option value="Critical">Kritik</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (ActiveTab == "pmo")
+{
+    <!-- PMO Integration Settings -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">PMO Entegrasyonu</h3>
+                    <p class="text-sm text-gray-600">Ticket onaylandığında otomatik olarak PMO sistemine iş oluşturulsun</p>
+                </div>
+                <button type="button" @onclick="@(() => Settings.PmoIntegrationEnabled = !Settings.PmoIntegrationEnabled)"
+                        class="@(Settings.PmoIntegrationEnabled ? "bg-green-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    <span class="@(Settings.PmoIntegrationEnabled ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                </button>
+            </div>
+
+            @if (Settings.PmoIntegrationEnabled)
+            {
+                <div class="space-y-4 pt-4 border-t border-gray-200">
+                    <!-- PMO API URL -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">PMO API URL</label>
+                        <input type="url" @bind="Settings.PmoApiUrl" placeholder="https://pmo.sirketiniz.com/api/tasks"
+                               class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+
+                    <!-- API Key -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">API Anahtarı</label>
+                        <div class="relative">
+                            <input type="@(ShowApiKey ? "text" : "password")" @bind="Settings.PmoApiKey" placeholder="API anahtarınızı girin"
+                                   class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <button type="button" @onclick="@(() => ShowApiKey = !ShowApiKey)" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                @if (ShowApiKey)
+                                {
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Default Project ID -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Varsayılan Proje ID</label>
+                        <input type="text" @bind="Settings.PmoDefaultProjectId" placeholder="PROJ-001"
+                               class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+
+                    <!-- Test Connection -->
+                    <div class="flex items-center space-x-3">
+                        <button @onclick="TestPmoConnection" disabled="@IsTestingConnection" class="inline-flex items-center px-3 py-2 border border-green-300 text-sm font-medium rounded-lg text-green-700 bg-green-50 hover:bg-green-100 transition-colors">
+                            @if (IsTestingConnection)
+                            {
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-green-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Test Ediliyor...
+                                        }
+                            else
+                            {
+                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Bağlantıyı Test Et
+                                        }
+                        </button>
+
+                        @if (!string.IsNullOrEmpty(PmoTestResult))
+                        {
+                            <div class="@(PmoTestSuccess ? "text-green-600" : "text-red-600") text-sm font-medium">
+                                @PmoTestResult
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- PMO Mapping Settings -->
+        @if (Settings.PmoIntegrationEnabled)
+        {
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Alan Eşleştirme</h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ticket Başlığı → PMO Alan</label>
+                            <input type="text" @bind="Settings.PmoTitleField" placeholder="title"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ticket Açıklama → PMO Alan</label>
+                            <input type="text" @bind="Settings.PmoDescriptionField" placeholder="description"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Öncelik → PMO Alan</label>
+                            <input type="text" @bind="Settings.PmoPriorityField" placeholder="priority"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kategori → PMO Alan</label>
+                            <input type="text" @bind="Settings.PmoCategoryField" placeholder="category"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (ActiveTab == "email")
+{
+    <!-- Email Settings -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">E-posta Ayarları</h3>
+            <div class="space-y-4">
+                <!-- SMTP Server -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">SMTP Sunucusu</label>
+                        <input type="text" @bind="Settings.SmtpServer" placeholder="mail.sirketiniz.com"
+                               class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Port</label>
+                        <input type="number" @bind="Settings.SmtpPort" placeholder="587"
+                               class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- SMTP Credentials -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kullanıcı Adı</label>
+                        <input type="text" @bind="Settings.SmtpUsername" placeholder="destek@sirketiniz.com"
+                               class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Şifre</label>
+                        <div class="relative">
+                            <input type="@(ShowSmtpPassword ? "text" : "password")" @bind="Settings.SmtpPassword" placeholder="••••••••"
+                                   class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button type="button" @onclick="@(() => ShowSmtpPassword = !ShowSmtpPassword)" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                @if (ShowSmtpPassword)
+                                {
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SSL/TLS -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">SSL/TLS Kullan</h4>
+                        <p class="text-sm text-gray-500">Güvenli bağlantı için SSL/TLS şifrelemesi</p>
+                    </div>
+                    <button type="button" @onclick="@(() => Settings.SmtpUseSsl = !Settings.SmtpUseSsl)"
+                            class="@(Settings.SmtpUseSsl ? "bg-blue-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <span class="@(Settings.SmtpUseSsl ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                    </button>
+                </div>
+
+                <!-- From Email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Gönderen E-posta</label>
+                    <input type="email" @bind="Settings.EmailFromAddress" placeholder="noreply@sirketiniz.com"
+                           class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Test Email -->
+                <div class="flex items-center space-x-3">
+                    <input type="email" @bind="TestEmailAddress" placeholder="test@email.com"
+                           class="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <button @onclick="SendTestEmail" disabled="@IsSendingTestEmail" class="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                        @if (IsSendingTestEmail)
+                        {
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Gönderiliyor...
+                                        }
+                        else
+                        {
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Test E-postası Gönder
+                                        }
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(EmailTestResult))
+                {
+                    <div class="@(EmailTestSuccess ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800") border rounded-lg p-3">
+                        <div class="flex items-center">
+                            @if (EmailTestSuccess)
+                            {
+                                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            }
+                            <span class="font-medium">@EmailTestResult</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Email Templates -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">E-posta Şablonları</h3>
+            <div class="space-y-4">
+                @foreach (var template in EmailTemplates)
+                {
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h4 class="font-medium text-gray-900">@template.Name</h4>
+                                <p class="text-sm text-gray-500">@template.Description</p>
+                            </div>
+                            <button @onclick="@(() => EditEmailTemplate(template))" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                Düzenle
+                            </button>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <strong>Konu:</strong> @template.Subject
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+else if (ActiveTab == "security")
+{
+    <!-- Security Settings -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Güvenlik Ayarları</h3>
+            <div class="space-y-4">
+                <!-- Session Timeout -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Oturum Zaman Aşımı (Dakika)</label>
+                    <input type="number" @bind="Settings.SessionTimeoutMinutes" placeholder="30"
+                           class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Max Login Attempts -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Maksimum Giriş Denemesi</label>
+                    <input type="number" @bind="Settings.MaxLoginAttempts" placeholder="5"
+                           class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Password Requirements -->
+                <div class="space-y-3">
+                    <h4 class="text-sm font-medium text-gray-900">Şifre Gereksinimleri</h4>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700">Minimum şifre uzunluğu</span>
+                        <input type="number" @bind="Settings.MinPasswordLength" min="6" max="20"
+                               class="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700">Büyük harf zorunlu</span>
+                        <button type="button" @onclick="@(() => Settings.RequireUppercase = !Settings.RequireUppercase)"
+                                class="@(Settings.RequireUppercase ? "bg-blue-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <span class="@(Settings.RequireUppercase ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700">Sayı zorunlu</span>
+                        <button type="button" @onclick="@(() => Settings.RequireDigit = !Settings.RequireDigit)"
+                                class="@(Settings.RequireDigit ? "bg-blue-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <span class="@(Settings.RequireDigit ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700">Özel karakter zorunlu</span>
+                        <button type="button" @onclick="@(() => Settings.RequireSpecialChar = !Settings.RequireSpecialChar)"
+                                class="@(Settings.RequireSpecialChar ? "bg-blue-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <span class="@(Settings.RequireSpecialChar ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Two Factor Authentication -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">İki Faktörlü Kimlik Doğrulama</h4>
+                        <p class="text-sm text-gray-500">Adminler için 2FA zorunlu</p>
+                    </div>
+                    <button type="button" @onclick="@(() => Settings.RequireTwoFactor = !Settings.RequireTwoFactor)"
+                            class="@(Settings.RequireTwoFactor ? "bg-blue-600" : "bg-gray-200") relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <span class="@(Settings.RequireTwoFactor ? "translate-x-5" : "translate-x-0") pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Email Template Modal -->
+@if (ShowEmailTemplateModal)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @onclick="CloseEmailTemplateModal"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-6 pt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            E-posta Şablonu Düzenle: @CurrentEmailTemplate?.Name
+                        </h3>
+                        <button @onclick="CloseEmailTemplateModal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Subject -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Konu</label>
+                            <input type="text" @bind="CurrentEmailTemplate.Subject" placeholder="E-posta konusu"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Body -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">İçerik</label>
+                            <textarea @bind="CurrentEmailTemplate.Body" rows="10" placeholder="E-posta içeriği"
+                                      class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"></textarea>
+                        </div>
+
+                        <!-- Variables -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-sm font-medium text-gray-900 mb-2">Kullanılabilir Değişkenler</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <code class="bg-gray-200 px-2 py-1 rounded">{userName}</code> - Kullanıcı adı
+                                </div>
+                                <div>
+                                    <code class="bg-gray-200 px-2 py-1 rounded">{ticketNumber}</code> - Ticket numarası
+                                </div>
+                                <div>
+                                    <code class="bg-gray-200 px-2 py-1 rounded">{ticketTitle}</code> - Ticket başlığı
+                                </div>
+                                <div>
+                                    <code class="bg-gray-200 px-2 py-1 rounded">{companyName}</code> - Firma adı
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3">
+                    <button @onclick="CloseEmailTemplateModal" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        İptal
+                    </button>
+                    <button @onclick="SaveEmailTemplate" class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                        Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
+    private SettingsData Settings = new();
+    private string ActiveTab = "general";
+    private bool IsSaving = false;
 
-}
+    // API Key visibility
+    private bool ShowApiKey = false;
+    private bool ShowSmtpPassword = false;
+
+    // PMO Test
+    private bool IsTestingConnection = false;
+    private string PmoTestResult = "";
+    private bool PmoTestSuccess = false;
+
+    // Email Test
+    private string TestEmailAddress = "";
+    private bool IsSendingTestEmail = false;
+    private string EmailTestResult = "";
+    private bool EmailTestSuccess = false;
+
+    // Email Templates
+    private bool ShowEmailTemplateModal = false;
+    private EmailTemplate? CurrentEmailTemplate;
+    private List<EmailTemplate> EmailTemplates = new();
+
+    private Dictionary<string, string> SettingsTabs = new()
+    {
+        { "general", "Genel Ayarlar" },
+        { "pmo", "PMO Entegrasyonu" },
+        { "email", "E-posta Ayarları" },
+        { "security", "Güvenlik" }
+    };
+
+    protected override void OnInitialized()
+    {
+        LoadSettings();
+        LoadEmailTemplates();
+    }
+
+    private void LoadSettings()
+    {
+        Settings = new SettingsData
+        {
+            CompanyName = "SoftDesk Ticket System",
+            SupportEmail = "destek@softdesk.com",
+            TimeZone = "Turkey Standard Time",
+            DefaultLanguage = "tr-TR",
+            AutoAssignTickets = true,
+            EmailNotifications = true,
+            DefaultPriority = "Medium",
+            PmoIntegrationEnabled = false,
+            PmoApiUrl = "",
+            PmoApiKey = "",
+            PmoDefaultProjectId = "",
+            PmoTitleField = "title",
+            PmoDescriptionField = "description",
+            PmoTitleField = "title",
+            PmoDescriptionField = "description",
+            PmoPriorityField = "priority",
+            PmoCategoryField = "category",
+            SmtpServer = "",
+            SmtpPort = 587,
+            SmtpUsername = "",
+            SmtpPassword = "",
+            SmtpUseSsl = true,
+            EmailFromAddress = "",
+            SessionTimeoutMinutes = 30,
+            MaxLoginAttempts = 5,
+            MinPasswordLength = 8,
+            RequireUppercase = true,
+            RequireDigit = true,
+            RequireSpecialChar = false,
+            RequireTwoFactor = false
+        };
+    }
+
+    private void LoadEmailTemplates()
+    {
+        EmailTemplates = new List<EmailTemplate>
+        {
+            new EmailTemplate
+            {
+                Id = Guid.NewGuid(),
+                Name = "Ticket Oluşturuldu",
+                Description = "Yeni ticket oluşturulduğunda gönderilen e-posta",
+                Subject = "Yeni Destek Talebi Oluşturuldu - #{ticketNumber}",
+                Body = "Merhaba {userName},\n\nYeni destek talebiniz başarıyla oluşturulmuştur.\n\nTicket Numarası: {ticketNumber}\nKonu: {ticketTitle}\n\nEn kısa sürede size dönüş yapacağız.\n\nTeşekkürler,\n{companyName} Destek Ekibi"
+            },
+            new EmailTemplate
+            {
+                Id = Guid.NewGuid(),
+                Name = "Ticket Güncellendi",
+                Description = "Ticket durumu güncellendiğinde gönderilen e-posta",
+                Subject = "Destek Talebiniz Güncellendi - #{ticketNumber}",
+                Body = "Merhaba {userName},\n\nDestek talebinizde bir güncelleme yapılmıştır.\n\nTicket Numarası: {ticketNumber}\nKonu: {ticketTitle}\n\nDetaylar için lütfen sisteme giriş yapınız.\n\nTeşekkürler,\n{companyName} Destek Ekibi"
+            },
+            new EmailTemplate
+            {
+                Id = Guid.NewGuid(),
+                Name = "Ticket Çözüldü",
+                Description = "Ticket çözüldüğünde gönderilen e-posta",
+                Subject = "Destek Talebiniz Çözüldü - #{ticketNumber}",
+                Body = "Merhaba {userName},\n\nDestek talebiniz başarıyla çözülmüştür.\n\nTicket Numarası: {ticketNumber}\nKonu: {ticketTitle}\n\nEğer sorun devam ediyorsa lütfen bize bildirin.\n\nTeşekkürler,\n{companyName} Destek Ekibi"
+            }
+        };
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        ActiveTab = tab;
+        StateHasChanged();
+    }
+
+    private async Task SaveAllSettings()
+    {
+        IsSaving = true;
+        await Task.Delay(1000); // Simulate API call
+        IsSaving = false;
+        StateHasChanged();
+    }
+
+    private async Task TestPmoConnection()
+    {
+        IsTestingConnection = true;
+        PmoTestResult = "";
+
+        await Task.Delay(2000); // Simulate API test
+
+        // Simulate test result
+        if (string.IsNullOrEmpty(Settings.PmoApiUrl) || string.IsNullOrEmpty(Settings.PmoApiKey))
+        {
+            PmoTestResult = "URL ve API anahtarı gerekli";
+            PmoTestSuccess = false;
+        }
+        else
+        {
+            PmoTestResult = "Bağlantı başarılı!";
+            PmoTestSuccess = true;
+        }
+
+        IsTestingConnection = false;
+        StateHasChanged();
+    }
+
+    private async Task SendTestEmail()
+    {
+        if (string.IsNullOrEmpty(TestEmailAddress)) return;
+
+        IsSendingTestEmail = true;
+        EmailTestResult = "";
+
+        await Task.Delay(2000); // Simulate email sending
+
+        // Simulate test result
+        if (string.IsNullOrEmpty(Settings.SmtpServer) || string.IsNullOrEmpty(Settings.SmtpUsername))
+        {
+            EmailTestResult = "SMTP ayarları eksik";
+            EmailTestSuccess = false;
+        }
+        else
+        {
+            EmailTestResult = $"Test e-postası {TestEmailAddress} adresine gönderildi";
+            EmailTestSuccess = true;
+        }
+
+        IsSendingTestEmail = false;
+        StateHasChanged();
+    }
+
+    private void EditEmailTemplate(EmailTemplate template)
+    {
+        CurrentEmailTemplate = new EmailTemplate
+        {
+            Id = template.Id,
+            Name = template.Name,
+            Description = template.Description,
+            Subject = template.Subject,
+            Body = template.Body
+        };
+        ShowEmailTemplateModal = true;
+    }
+
+    private void CloseEmailTemplateModal()
+    {
+        ShowEmailTemplateModal = false;
+        CurrentEmailTemplate = null;
+    }
+
+    private async Task SaveEmailTemplate()
+    {
+        if (CurrentEmailTemplate == null) return;
+
+        var existing = EmailTemplates.FirstOrDefault(t => t.Id == CurrentEmailTemplate.Id);
+        if (existing != null)
+        {
+            existing.Subject = CurrentEmailTemplate.Subject;
+            existing.Body = CurrentEmailTemplate.Body;
+        }
+
+        await Task.Delay(500); // Simulate save
+        CloseEmailTemplateModal();
+        StateHasChanged();
+    }
+
+    #region Models
+    public class SettingsData
+    {
+        // General Settings
+        public string CompanyName { get; set; } = "";
+        public string SupportEmail { get; set; } = "";
+        public string TimeZone { get; set; } = "";
+        public string DefaultLanguage { get; set; } = "";
+        public bool AutoAssignTickets { get; set; }
+        public bool EmailNotifications { get; set; }
+        public string DefaultPriority { get; set; } = "";
+
+        // PMO Integration
+        public bool PmoIntegrationEnabled { get; set; }
+        public string PmoApiUrl { get; set; } = "";
+        public string PmoApiKey { get; set; } = "";
+        public string PmoDefaultProjectId { get; set; } = "";
+        public string PmoTitleField { get; set; } = "";
+        public string PmoDescriptionField { get; set; } = "";
+        public string PmoPriorityField { get; set; } = "";
+        public string PmoCategoryField { get; set; } = "";
+
+        // Email Settings
+        public string SmtpServer { get; set; } = "";
+        public int SmtpPort { get; set; }
+        public string SmtpUsername { get; set; } = "";
+        public string SmtpPassword { get; set; } = "";
+        public bool SmtpUseSsl { get; set; }
+        public string EmailFromAddress { get; set; } = "";
+
+        // Security Settings
+        public int SessionTimeoutMinutes { get; set; }
+        public int MaxLoginAttempts { get; set; }
+        public int MinPasswordLength { get; set; }
+        public bool RequireUppercase { get; set; }
+        public bool RequireDigit { get; set; }
+        public bool RequireSpecialChar { get; set; }
+        public bool RequireTwoFactor { get; set; }
+    }
+
+    public class EmailTemplate
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Body { get; set; } = "";
+    }
+    #endregion
+} *@
