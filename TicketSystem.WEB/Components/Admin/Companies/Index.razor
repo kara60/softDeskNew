@@ -1,0 +1,488 @@
+﻿@page "/admin/companies"
+@rendermode InteractiveServer
+
+<PageTitle>Firma Yönetimi - SoftDesk Admin</PageTitle>
+
+<!-- Page Header -->
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 mb-1">Firma Yönetimi</h1>
+            <p class="text-sm text-slate-600">Müşteri firmalarını ve bilgilerini yönetin</p>
+        </div>
+        <button @onclick="OpenCreateModal" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-sm transition-all duration-150">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Yeni Firma
+        </button>
+    </div>
+</div>
+
+<!-- Companies Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    @foreach (var company in Companies)
+    {
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow duration-200">
+            <!-- Company Header -->
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br @GetCompanyColor(company.Name) rounded-xl flex items-center justify-center mr-4">
+                        <span class="text-xl font-bold text-white">@GetCompanyInitials(company.Name)</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-900 line-clamp-1">@company.Name</h3>
+                        <p class="text-sm text-slate-600">@company.ContactPerson</p>
+                    </div>
+                </div>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(company.IsActive ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800")">
+                    @(company.IsActive ? "Aktif" : "Pasif")
+                </span>
+            </div>
+
+            <!-- Company Details -->
+            <div class="space-y-3 mb-4">
+                @if (!string.IsNullOrEmpty(company.Email))
+                {
+                    <div class="flex items-center text-sm text-slate-600">
+                        <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        @company.Email
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(company.Phone))
+                {
+                    <div class="flex items-center text-sm text-slate-600">
+                        <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        @company.Phone
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(company.Address))
+                {
+                    <div class="flex items-start text-sm text-slate-600">
+                        <svg class="w-4 h-4 mr-2 mt-0.5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span class="line-clamp-2">@company.Address</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-3 mb-4 p-3 bg-slate-50 rounded-lg">
+                <div class="text-center">
+                    <div class="text-lg font-bold text-slate-900">@company.UserCount</div>
+                    <div class="text-xs text-slate-600">Kullanıcı</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold text-blue-600">@company.TicketCount</div>
+                    <div class="text-xs text-slate-600">Ticket</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-bold text-emerald-600">@company.TicketCredits</div>
+                    <div class="text-xs text-slate-600">Kredi</div>
+                </div>
+            </div>
+
+            <!-- Plan Info -->
+            <div class="flex items-center justify-between mb-4">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @GetPlanBadgeClass(company.PlanType)">
+                    @GetPlanIcon(company.PlanType) @company.PlanType
+                </span>
+                <span class="text-xs text-slate-500">@company.MonthlyTicketLimit ticket/ay</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+                <div class="text-xs text-slate-500">
+                    @company.CreatedAt.ToString("dd.MM.yyyy")
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button @onclick="@(() => EditCompany(company))" class="inline-flex items-center px-2 py-1 border border-blue-300 text-xs font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                        <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Düzenle
+                    </button>
+                    <button @onclick="@(() => ToggleStatus(company))" class="inline-flex items-center px-2 py-1 border border-slate-300 text-xs font-medium rounded-md text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors">
+                        @(company.IsActive ? "Pasifleştir" : "Aktifleştir")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Create/Edit Company Modal -->
+@if (ShowModal)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" @onclick="CloseModal"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white px-6 pt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-medium text-slate-900">
+                            @(IsEditMode ? "Firma Düzenle" : "Yeni Firma")
+                        </h3>
+                        <button @onclick="CloseModal" class="text-slate-400 hover:text-slate-600">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Company Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Firma Adı *</label>
+                            <input type="text" @bind="CurrentCompany.Name" placeholder="ABC LİMİTED ŞİRKETİ"
+                                   class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+
+                        <!-- Database Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Database Adı *</label>
+                            <input type="text" @bind="CurrentCompany.DatabaseName" placeholder="abc_limited"
+                                   class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            <p class="text-xs text-slate-500 mt-1">Her müşteri için ayrı database (snake_case)</p>
+                        </div>
+
+                        <!-- Contact Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">İletişim Kişisi</label>
+                                <input type="text" @bind="CurrentCompany.ContactPerson" placeholder="Ahmet Yılmaz"
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Telefon</label>
+                                <input type="text" @bind="CurrentCompany.Phone" placeholder="0212 555 0123"
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">E-posta</label>
+                            <input type="email" @bind="CurrentCompany.Email" placeholder="info@abc.com"
+                                   class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+
+                        <!-- Address -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Adres</label>
+                            <textarea @bind="CurrentCompany.Address" rows="3" placeholder="Tam adres bilgisi..."
+                                      class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"></textarea>
+                        </div>
+
+                        <!-- Plan & Limits -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Plan Tipi</label>
+                                <select @bind="CurrentCompany.PlanType" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    <option value="FREE">FREE</option>
+                                    <option value="BASIC">BASIC</option>
+                                    <option value="PREMIUM">PREMIUM</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Aylık Ticket Limiti</label>
+                                <input type="number" @bind="CurrentCompany.MonthlyTicketLimit"
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                        </div>
+
+                        <!-- Ticket Credits -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Ticket Kredileri</label>
+                            <input type="number" @bind="CurrentCompany.TicketCredits"
+                                   class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            <p class="text-xs text-slate-500 mt-1">Kalan ticket hakkı</p>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <p class="text-xs font-medium text-slate-500 mb-2">Önizleme:</p>
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
+                                    <span class="text-xl font-bold text-white">@GetCompanyInitials(CurrentCompany.Name)</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-slate-900">@(!string.IsNullOrEmpty(CurrentCompany.Name) ? CurrentCompany.Name : "Firma Adı")</h4>
+                                    <p class="text-sm text-slate-600">@(!string.IsNullOrEmpty(CurrentCompany.ContactPerson) ? CurrentCompany.ContactPerson : "İletişim Kişisi")</p>
+                                    <p class="text-xs text-slate-500">@CurrentCompany.PlanType - @CurrentCompany.MonthlyTicketLimit ticket/ay</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 px-6 py-4 flex items-center justify-end space-x-3">
+                    <button @onclick="CloseModal" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                        İptal
+                    </button>
+                    <button @onclick="SaveCompany" disabled="@IsSaving" class="@(IsSaving ? "bg-slate-400 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700") px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white transition-colors">
+                        @(IsSaving ? "Kaydediliyor..." : (IsEditMode ? "Güncelle" : "Kaydet"))
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CompanyData> Companies = new();
+    private CompanyData CurrentCompany = new();
+
+    private bool ShowModal = false;
+    private bool IsEditMode = false;
+    private bool IsSaving = false;
+
+    protected override void OnInitialized()
+    {
+        LoadCompanies();
+    }
+
+    private void LoadCompanies()
+    {
+        Companies = new List<CompanyData>
+        {
+            new CompanyData
+            {
+                Id = Guid.NewGuid(),
+                Name = "BANAT FIRÇA VE PLASTİK SAN. A.Ş.",
+                DatabaseName = "banat_firca",
+                ContactPerson = "Mehmet Banat",
+                Email = "info@banatfirca.com",
+                Phone = "0212 555 0123",
+                Address = "Organize Sanayi Bölgesi, 1. Cadde No:15, Çerkezköy/Tekirdağ",
+                PlanType = "PREMIUM",
+                MonthlyTicketLimit = 100,
+                TicketCredits = 75,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-60),
+                UserCount = 5,
+                TicketCount = 42
+            },
+            new CompanyData
+            {
+                Id = Guid.NewGuid(),
+                Name = "SOYBAŞ DEMİR SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+                DatabaseName = "soybas_demir",
+                ContactPerson = "Ali Soybaş",
+                Email = "ali@soybas.com",
+                Phone = "0216 444 5566",
+                Address = "Metal Sanayi Sitesi, B Blok No:42, Tuzla/İstanbul",
+                PlanType = "BASIC",
+                MonthlyTicketLimit = 50,
+                TicketCredits = 32,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-45),
+                UserCount = 3,
+                TicketCount = 18
+            },
+            new CompanyData
+            {
+                Id = Guid.NewGuid(),
+                Name = "NURTEKS",
+                DatabaseName = "nurteks",
+                ContactPerson = "Fatma Nur",
+                Email = "info@nurteks.com",
+                Phone = "0232 777 8899",
+                Address = "Tekstil Sanayi Sitesi, C Blok No:28, Kemalpaşa/İzmir",
+                PlanType = "FREE",
+                MonthlyTicketLimit = 10,
+                TicketCredits = 8,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-30),
+                UserCount = 2,
+                TicketCount = 5
+            },
+            new CompanyData
+            {
+                Id = Guid.NewGuid(),
+                Name = "BİLİNMEYEN LTD. ŞTİ.",
+                DatabaseName = "bilinmeyen_ltd",
+                ContactPerson = "Test Kullanıcı",
+                Email = "test@bilinmeyen.com",
+                Phone = "0555 123 4567",
+                Address = "Test Adresi",
+                PlanType = "BASIC",
+                MonthlyTicketLimit = 25,
+                TicketCredits = 0,
+                IsActive = false,
+                CreatedAt = DateTime.Now.AddDays(-15),
+                UserCount = 1,
+                TicketCount = 0
+            }
+        };
+    }
+
+    #region Company Operations
+    private void OpenCreateModal()
+    {
+        CurrentCompany = new CompanyData
+        {
+            PlanType = "FREE",
+            MonthlyTicketLimit = 10,
+            TicketCredits = 10
+        };
+        IsEditMode = false;
+        ShowModal = true;
+    }
+
+    private void EditCompany(CompanyData company)
+    {
+        CurrentCompany = new CompanyData
+        {
+            Id = company.Id,
+            Name = company.Name,
+            DatabaseName = company.DatabaseName,
+            ContactPerson = company.ContactPerson,
+            Email = company.Email,
+            Phone = company.Phone,
+            Address = company.Address,
+            PlanType = company.PlanType,
+            MonthlyTicketLimit = company.MonthlyTicketLimit,
+            TicketCredits = company.TicketCredits,
+            IsActive = company.IsActive
+        };
+        IsEditMode = true;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        CurrentCompany = new();
+    }
+
+    private async Task SaveCompany()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentCompany.Name) ||
+            string.IsNullOrWhiteSpace(CurrentCompany.DatabaseName))
+            return;
+
+        IsSaving = true;
+        await Task.Delay(500);
+
+        if (IsEditMode)
+        {
+            var existing = Companies.FirstOrDefault(c => c.Id == CurrentCompany.Id);
+            if (existing != null)
+            {
+                existing.Name = CurrentCompany.Name;
+                existing.DatabaseName = CurrentCompany.DatabaseName;
+                existing.ContactPerson = CurrentCompany.ContactPerson;
+                existing.Email = CurrentCompany.Email;
+                existing.Phone = CurrentCompany.Phone;
+                existing.Address = CurrentCompany.Address;
+                existing.PlanType = CurrentCompany.PlanType;
+                existing.MonthlyTicketLimit = CurrentCompany.MonthlyTicketLimit;
+                existing.TicketCredits = CurrentCompany.TicketCredits;
+            }
+        }
+        else
+        {
+            CurrentCompany.Id = Guid.NewGuid();
+            CurrentCompany.CreatedAt = DateTime.Now;
+            CurrentCompany.IsActive = true;
+            CurrentCompany.UserCount = 0;
+            CurrentCompany.TicketCount = 0;
+            Companies.Add(CurrentCompany);
+        }
+
+        IsSaving = false;
+        CloseModal();
+        StateHasChanged();
+    }
+
+    private async Task ToggleStatus(CompanyData company)
+    {
+        company.IsActive = !company.IsActive;
+        await Task.Delay(500);
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Helper Methods
+    private string GetCompanyInitials(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "??";
+
+        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length >= 2)
+        {
+            return $"{words[0][0]}{words[1][0]}".ToUpper();
+        }
+        return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+    }
+
+    private string GetCompanyColor(string name)
+    {
+        var hash = name.GetHashCode();
+        var colors = new[]
+        {
+            "from-blue-500 to-blue-600",
+            "from-emerald-500 to-emerald-600",
+            "from-purple-500 to-purple-600",
+            "from-orange-500 to-orange-600",
+            "from-pink-500 to-pink-600",
+            "from-indigo-500 to-indigo-600",
+            "from-cyan-500 to-cyan-600",
+            "from-teal-500 to-teal-600"
+        };
+        return colors[Math.Abs(hash) % colors.Length];
+    }
+
+    private string GetPlanBadgeClass(string planType)
+    {
+        return planType switch
+        {
+            "FREE" => "bg-slate-100 text-slate-800",
+            "BASIC" => "bg-blue-100 text-blue-800",
+            "PREMIUM" => "bg-purple-100 text-purple-800",
+            _ => "bg-slate-100 text-slate-800"
+        };
+    }
+
+    private string GetPlanIcon(string planType)
+    {
+        return planType switch
+        {
+            "FREE" => "🆓",
+            "BASIC" => "⭐",
+            "PREMIUM" => "👑",
+            _ => "❓"
+        };
+    }
+    #endregion
+
+    #region Models
+    public class CompanyData
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string DatabaseName { get; set; } = "";
+        public string ContactPerson { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Address { get; set; } = "";
+        public string PlanType { get; set; } = "FREE";
+        public int MonthlyTicketLimit { get; set; } = 10;
+        public int TicketCredits { get; set; } = 0;
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+        public int UserCount { get; set; }
+        public int TicketCount { get; set; }
+    }
+    #endregion
+}

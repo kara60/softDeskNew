@@ -3,49 +3,258 @@
 
 <PageTitle>Dashboard - SoftDesk</PageTitle>
 
-<!-- Welcome Section -->
-<div class="mb-8">
-    <h1 class="text-2xl font-semibold text-gray-900 mb-2">Merhaba, BANAT FIRÇA VE PLASTİK SAN. A.Ş.!</h1>
-    <p class="text-gray-600">Ticket sisteminize hoş geldiniz. Aşağıda güncel durumunuzu görebilirsiniz.</p>
-</div>
-
-<!-- Stats Cards Component -->
-<StatsCards TotalTickets="42"
-            PendingTickets="29"
-            InProgressTickets="3"
-            ResolvedTickets="1"
-            ClosedTickets="9"
-            ResolvedPercentage="2.4m" />
-
-<!-- Main Content Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Ticket Type Analysis Component -->
-    <TicketTypeAnalysis MostPopularType="Genel Destek" MostPopularCount="19" />
-
-    <!-- Son Ticketlar -->
-    <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Son Ticketlar</h3>
-            <p class="text-gray-600 text-sm">Son 2 günde açılan ticket bulunmuyor</p>
+<!-- Compact Welcome Section -->
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 mb-1">Merhaba, BANAT FIRÇA! 👋</h1>
+            <p class="text-sm text-slate-600">Bugün 3 yeni talep var, 1 tanesi onay bekliyor.</p>
         </div>
-
-        <div class="text-center py-12">
-            <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-            </div>
-            <h3 class="text-sm font-medium text-gray-900 mb-2">Henüz ticket yok</h3>
-            <p class="text-sm text-gray-500 mb-6">Yeni bir destek talebi oluşturmak için başlayın.</p>
-            <a href="/tickets/create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all duration-200">
-                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Yeni Ticket Oluştur
-            </a>
+        <div class="text-right">
+            <p class="text-xs text-slate-500">Son güncelleme</p>
+            <p class="text-sm font-medium text-slate-700">13 Ağustos 2025, 14:30</p>
         </div>
     </div>
 </div>
 
-<!-- Quick Actions Component -->
-<QuickActions />
+<!-- Compact Stats Cards -->
+<div class="grid grid-cols-5 gap-4 mb-6">
+    <!-- Toplam -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">42</p>
+                <p class="text-xs text-slate-600">Toplam</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bekleyen -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">29</p>
+                <p class="text-xs text-slate-600">Bekleyen</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- İşlemde -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">3</p>
+                <p class="text-xs text-slate-600">İşlemde</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Çözüldü -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">1</p>
+                <p class="text-xs text-slate-600">Çözüldü</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kapandı -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">9</p>
+                <p class="text-xs text-slate-600">Kapandı</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid - Compact -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Ticket Type Analysis - Compact -->
+    <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-900">Talep Türü Analizi</h3>
+            <span class="text-sm text-slate-500">En Popüler: <span class="font-medium text-blue-600">Genel Destek</span></span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Hata/Sorun -->
+            <div class="flex items-center p-4 bg-red-50 rounded-lg border border-red-100">
+                <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">Hata/Sorun</p>
+                    <p class="text-2xl font-bold text-red-600">11</p>
+                    <p class="text-xs text-slate-600">%26.2</p>
+                </div>
+            </div>
+
+            <!-- Yeni Özellik -->
+            <div class="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">Yeni Özellik</p>
+                    <p class="text-2xl font-bold text-blue-600">5</p>
+                    <p class="text-xs text-slate-600">%11.9</p>
+                </div>
+            </div>
+
+            <!-- Danışmanlık -->
+            <div class="flex items-center p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">Danışmanlık</p>
+                    <p class="text-2xl font-bold text-emerald-600">4</p>
+                    <p class="text-xs text-slate-600">%9.5</p>
+                </div>
+            </div>
+
+            <!-- Genel Destek -->
+            <div class="flex items-center p-4 bg-purple-50 rounded-lg border border-purple-100 relative">
+                <div class="absolute -top-2 -right-2">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-purple-600 text-white">
+                        EN POPÜLER
+                    </span>
+                </div>
+                <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-900">Genel Destek</p>
+                    <p class="text-2xl font-bold text-purple-600">19</p>
+                    <p class="text-xs text-slate-600">%45.2</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions - Compact -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <h3 class="text-lg font-semibold text-slate-900 mb-4">Hızlı İşlemler</h3>
+
+        <div class="space-y-3">
+            <a href="/tickets" class="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors group">
+                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-900">Tüm Talepler</p>
+                    <p class="text-xs text-slate-600">42 talep görüntüle</p>
+                </div>
+            </a>
+
+            <a href="/tickets/create" class="flex items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors group">
+                <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-900">Yeni Talep</p>
+                    <p class="text-xs text-slate-600">Destek talebi oluştur</p>
+                </div>
+            </a>
+
+            <a href="/reports" class="flex items-center p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors group">
+                <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-900">Raporlar</p>
+                    <p class="text-xs text-slate-600">Detaylı analiz</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Recent Activity - Compact -->
+        <div class="mt-6 pt-4 border-t border-slate-200">
+            <h4 class="text-sm font-semibold text-slate-900 mb-3">Son Aktivite</h4>
+            <div class="space-y-2">
+                <div class="flex items-center text-sm">
+                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span class="text-slate-600 text-xs">TKT-00891 çözüldü</span>
+                    <span class="text-slate-400 text-xs ml-auto">2s</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                    <span class="text-slate-600 text-xs">Yeni yorum eklendi</span>
+                    <span class="text-slate-400 text-xs ml-auto">5m</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <div class="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                    <span class="text-slate-600 text-xs">TKT-00894 oluşturuldu</span>
+                    <span class="text-slate-400 text-xs ml-auto">1h</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compact Bottom Stats -->
+<div class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-sm font-semibold text-slate-900 mb-1">Bu Ay Performansınız</h3>
+            <p class="text-xs text-slate-600">Geçen aya göre %12 artış gösterdiniz</p>
+        </div>
+        <div class="flex items-center space-x-6 text-sm">
+            <div class="text-center">
+                <div class="text-lg font-bold text-blue-600">24</div>
+                <div class="text-xs text-slate-600">Çözülen</div>
+            </div>
+            <div class="text-center">
+                <div class="text-lg font-bold text-emerald-600">96%</div>
+                <div class="text-xs text-slate-600">Memnuniyet</div>
+            </div>
+            <div class="text-center">
+                <div class="text-lg font-bold text-purple-600">2.4h</div>
+                <div class="text-xs text-slate-600">Ort. Süre</div>
+            </div>
+        </div>
+    </div>
+</div>

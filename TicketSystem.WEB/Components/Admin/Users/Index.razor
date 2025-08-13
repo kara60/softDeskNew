@@ -1,0 +1,551 @@
+﻿@page "/admin/users"
+@rendermode InteractiveServer
+
+<PageTitle>Kullanıcı Yönetimi - SoftDesk Admin</PageTitle>
+
+<!-- Page Header -->
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 mb-1">Kullanıcı Yönetimi</h1>
+            <p class="text-sm text-slate-600">Admin ve müşteri kullanıcılarını yönetin</p>
+        </div>
+        <button @onclick="OpenCreateModal" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-sm transition-all duration-150">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Yeni Kullanıcı
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <!-- Search -->
+        <div class="md:col-span-2">
+            <div class="relative">
+                <input type="text" @bind="SearchTerm" @bind:event="oninput" placeholder="Kullanıcı ara (ad, email, firma...)"
+                       class="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm bg-slate-50">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Filter -->
+        <div>
+            <select @bind="SelectedRole" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm bg-white">
+                <option value="">Tüm Roller</option>
+                <option value="Admin">Admin</option>
+                <option value="User">Kullanıcı</option>
+            </select>
+        </div>
+
+        <!-- Company Filter -->
+        <div>
+            <select @bind="SelectedCompany" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm bg-white">
+                <option value="">Tüm Firmalar</option>
+                @foreach (var company in Companies)
+                {
+                    <option value="@company.Id">@company.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Users List -->
+@if (FilteredUsers.Any())
+{
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Kullanıcı</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Firma</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rol</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Durum</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Son Giriş</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-slate-200">
+                    @foreach (var user in FilteredUsers)
+                    {
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gradient-to-br @GetUserAvatarColor(user.Email) rounded-lg flex items-center justify-center mr-3">
+                                        <span class="text-sm font-bold text-white">@GetUserInitials(user.FirstName, user.LastName)</span>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium text-slate-900">@user.FirstName @user.LastName</div>
+                                        <div class="text-sm text-slate-500">@user.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if (user.Company != null)
+                                {
+                                    <div class="text-sm text-slate-900">@user.Company.Name</div>
+                                    <div class="text-sm text-slate-500">@user.Company.ContactPerson</div>
+                                }
+                                else
+                                {
+                                    <span class="text-sm text-slate-500 italic">Firma atanmamış</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @GetRoleBadgeClass(user.Role)">
+                                    @GetRoleIcon(user.Role) @user.Role
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(user.IsActive ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800")">
+                                    @(user.IsActive ? "Aktif" : "Pasif")
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                @(user.LastLoginDate?.ToString("dd.MM.yyyy HH:mm") ?? "Hiç giriş yapmamış")
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <button @onclick="@(() => EditUser(user))" class="text-blue-600 hover:text-blue-900">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    <button @onclick="@(() => ToggleUserStatus(user))" class="text-@(user.IsActive ? "red" : "emerald")-600 hover:text-@(user.IsActive ? "red" : "emerald")-900">
+                                        @if (user.IsActive)
+                                        {
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        }
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl p-8 shadow-sm border border-slate-200 text-center">
+        <div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-slate-900 mb-2">Kullanıcı bulunamadı</h3>
+        <p class="text-slate-500 mb-4">Arama kriterlerinize uygun kullanıcı bulunamadı.</p>
+    </div>
+}
+
+<!-- Create/Edit User Modal -->
+@if (ShowModal)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" @onclick="CloseModal"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-6 pt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-medium text-slate-900">
+                            @(IsEditMode ? "Kullanıcı Düzenle" : "Yeni Kullanıcı")
+                        </h3>
+                        <button @onclick="CloseModal" class="text-slate-400 hover:text-slate-600">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Name -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Ad *</label>
+                                <input type="text" @bind="CurrentUser.FirstName" placeholder="Ahmet"
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Soyad *</label>
+                                <input type="text" @bind="CurrentUser.LastName" placeholder="Yılmaz"
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">E-posta *</label>
+                            <input type="email" @bind="CurrentUser.Email" placeholder="ahmet@firma.com"
+                                   class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+
+                        <!-- Password (only for new users) -->
+                        @if (!IsEditMode)
+                        {
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Şifre *</label>
+                                <input type="password" @bind="CurrentUser.Password" placeholder="••••••••"
+                                       class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        }
+
+                        <!-- Role -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Rol *</label>
+                            <select @bind="CurrentUser.Role" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Seçiniz</option>
+                                <option value="Admin">Admin</option>
+                                <option value="User">Kullanıcı</option>
+                            </select>
+                        </div>
+
+                        <!-- Company (only for Users) -->
+                        @if (CurrentUser.Role == "User")
+                        {
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Firma *</label>
+                                <select @bind="CurrentUser.CompanyId" class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                    <option value="">Firma Seçiniz</option>
+                                    @foreach (var company in Companies)
+                                    {
+                                        <option value="@company.Id">@company.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+
+                        <!-- Preview -->
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <p class="text-xs font-medium text-slate-500 mb-2">Önizleme:</p>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                                    <span class="text-sm font-bold text-white">@GetUserInitials(CurrentUser.FirstName, CurrentUser.LastName)</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-slate-900">@($"{CurrentUser.FirstName} {CurrentUser.LastName}".Trim())</h4>
+                                    <p class="text-sm text-slate-600">@CurrentUser.Email</p>
+                                    <p class="text-xs text-slate-500">@CurrentUser.Role @(CurrentUser.Role == "User" ? $"- {Companies.FirstOrDefault(c => c.Id.ToString() == CurrentUser.CompanyId)?.Name}" : "")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 px-6 py-4 flex items-center justify-end space-x-3">
+                    <button @onclick="CloseModal" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                        İptal
+                    </button>
+                    <button @onclick="SaveUser" disabled="@IsSaving" class="@(IsSaving ? "bg-slate-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700") px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white transition-colors">
+                        @(IsSaving ? "Kaydediliyor..." : (IsEditMode ? "Güncelle" : "Kaydet"))
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UserData> Users = new();
+    private List<CompanyData> Companies = new();
+    private UserData CurrentUser = new();
+
+    private string SearchTerm = "";
+    private string SelectedRole = "";
+    private string SelectedCompany = "";
+
+    private bool ShowModal = false;
+    private bool IsEditMode = false;
+    private bool IsSaving = false;
+
+    protected override void OnInitialized()
+    {
+        LoadCompanies();
+        LoadUsers();
+    }
+
+    private IEnumerable<UserData> FilteredUsers
+    {
+        get
+        {
+            var filtered = Users.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                filtered = filtered.Where(u =>
+                    u.FirstName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    u.LastName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    u.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (u.Company?.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedRole))
+            {
+                filtered = filtered.Where(u => u.Role == SelectedRole);
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedCompany))
+            {
+                filtered = filtered.Where(u => u.Company?.Id.ToString() == SelectedCompany);
+            }
+
+            return filtered.OrderBy(u => u.FirstName).ThenBy(u => u.LastName);
+        }
+    }
+
+    private void LoadCompanies()
+    {
+        Companies = new List<CompanyData>
+        {
+            new CompanyData { Id = Guid.NewGuid(), Name = "BANAT FIRÇA VE PLASTİK SAN. A.Ş.", ContactPerson = "Mehmet Banat" },
+            new CompanyData { Id = Guid.NewGuid(), Name = "SOYBAŞ DEMİR SANAYİ VE TİCARET ANONİM ŞİRKETİ", ContactPerson = "Ali Soybaş" },
+            new CompanyData { Id = Guid.NewGuid(), Name = "NURTEKS", ContactPerson = "Fatma Nur" }
+        };
+    }
+
+    private void LoadUsers()
+    {
+        var banatCompany = Companies.First();
+        var soybassCompany = Companies.Skip(1).First();
+        var nurteksCompany = Companies.Last();
+
+        Users = new List<UserData>
+        {
+            new UserData
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Ahmet",
+                LastName = "Yılmaz",
+                Email = "admin@softdesk.com",
+                Role = "Admin",
+                IsActive = true,
+                Company = null,
+                CreatedAt = DateTime.Now.AddDays(-30),
+                LastLoginDate = DateTime.Now.AddHours(-2)
+            },
+            new UserData
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Mehmet",
+                LastName = "Banat",
+                Email = "mehmet@banatfirca.com",
+                Role = "User",
+                IsActive = true,
+                Company = banatCompany,
+                CreatedAt = DateTime.Now.AddDays(-25),
+                LastLoginDate = DateTime.Now.AddMinutes(-15)
+            },
+            new UserData
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Fatma",
+                LastName = "Kaya",
+                Email = "fatma@banatfirca.com",
+                Role = "User",
+                IsActive = true,
+                Company = banatCompany,
+                CreatedAt = DateTime.Now.AddDays(-20),
+                LastLoginDate = DateTime.Now.AddDays(-2)
+            },
+            new UserData
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Ali",
+                LastName = "Soybaş",
+                Email = "ali@soybas.com",
+                Role = "User",
+                IsActive = true,
+                Company = soybassCompany,
+                CreatedAt = DateTime.Now.AddDays(-15),
+                LastLoginDate = DateTime.Now.AddDays(-1)
+            },
+            new UserData
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Ayşe",
+                LastName = "Demir",
+                Email = "ayse@soybas.com",
+                Role = "User",
+                IsActive = false,
+                Company = soybassCompany,
+                CreatedAt = DateTime.Now.AddDays(-10),
+                LastLoginDate = DateTime.Now.AddDays(-7)
+            }
+        };
+    }
+
+    #region User Operations
+    private void OpenCreateModal()
+    {
+        CurrentUser = new UserData();
+        IsEditMode = false;
+        ShowModal = true;
+    }
+
+    private void EditUser(UserData user)
+    {
+        CurrentUser = new UserData
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Role = user.Role,
+            CompanyId = user.Company?.Id.ToString() ?? "",
+            IsActive = user.IsActive
+        };
+        IsEditMode = true;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        CurrentUser = new();
+    }
+
+    private async Task SaveUser()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentUser.FirstName) ||
+            string.IsNullOrWhiteSpace(CurrentUser.LastName) ||
+            string.IsNullOrWhiteSpace(CurrentUser.Email) ||
+            string.IsNullOrWhiteSpace(CurrentUser.Role))
+            return;
+
+        if (CurrentUser.Role == "User" && string.IsNullOrWhiteSpace(CurrentUser.CompanyId))
+            return;
+
+        IsSaving = true;
+        await Task.Delay(500);
+
+        if (IsEditMode)
+        {
+            var existing = Users.FirstOrDefault(u => u.Id == CurrentUser.Id);
+            if (existing != null)
+            {
+                existing.FirstName = CurrentUser.FirstName;
+                existing.LastName = CurrentUser.LastName;
+                existing.Email = CurrentUser.Email;
+                existing.Role = CurrentUser.Role;
+                existing.Company = CurrentUser.Role == "User" && !string.IsNullOrWhiteSpace(CurrentUser.CompanyId)
+                    ? Companies.FirstOrDefault(c => c.Id.ToString() == CurrentUser.CompanyId)
+                    : null;
+            }
+        }
+        else
+        {
+            var newUser = new UserData
+            {
+                Id = Guid.NewGuid(),
+                FirstName = CurrentUser.FirstName,
+                LastName = CurrentUser.LastName,
+                Email = CurrentUser.Email,
+                Role = CurrentUser.Role,
+                Company = CurrentUser.Role == "User" && !string.IsNullOrWhiteSpace(CurrentUser.CompanyId)
+                    ? Companies.FirstOrDefault(c => c.Id.ToString() == CurrentUser.CompanyId)
+                    : null,
+                IsActive = true,
+                CreatedAt = DateTime.Now
+            };
+            Users.Add(newUser);
+        }
+
+        IsSaving = false;
+        CloseModal();
+        StateHasChanged();
+    }
+
+    private async Task ToggleUserStatus(UserData user)
+    {
+        user.IsActive = !user.IsActive;
+        await Task.Delay(500);
+        StateHasChanged();
+    }
+    #endregion
+
+    #region Helper Methods
+    private string GetUserInitials(string firstName, string lastName)
+    {
+        var first = !string.IsNullOrEmpty(firstName) ? firstName[0].ToString().ToUpper() : "";
+        var last = !string.IsNullOrEmpty(lastName) ? lastName[0].ToString().ToUpper() : "";
+        return first + last;
+    }
+
+    private string GetUserAvatarColor(string email)
+    {
+        var hash = email.GetHashCode();
+        var colors = new[]
+        {
+            "from-blue-500 to-blue-600",
+            "from-emerald-500 to-emerald-600",
+            "from-purple-500 to-purple-600",
+            "from-orange-500 to-orange-600",
+            "from-pink-500 to-pink-600",
+            "from-indigo-500 to-indigo-600"
+        };
+        return colors[Math.Abs(hash) % colors.Length];
+    }
+
+    private string GetRoleBadgeClass(string role)
+    {
+        return role switch
+        {
+            "Admin" => "bg-red-100 text-red-800",
+            "User" => "bg-blue-100 text-blue-800",
+            _ => "bg-slate-100 text-slate-800"
+        };
+    }
+
+    private string GetRoleIcon(string role)
+    {
+        return role switch
+        {
+            "Admin" => "👑",
+            "User" => "👤",
+            _ => "❓"
+        };
+    }
+    #endregion
+
+    #region Models
+    public class UserData
+    {
+        public Guid Id { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string Role { get; set; } = "";
+        public string CompanyId { get; set; } = "";
+        public CompanyData? Company { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? LastLoginDate { get; set; }
+    }
+
+    public class CompanyData
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string ContactPerson { get; set; } = "";
+    }
+    #endregion
+}

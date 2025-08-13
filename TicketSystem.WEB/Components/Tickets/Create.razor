@@ -1,4 +1,5 @@
 ﻿@page "/tickets/create"
+@rendermode InteractiveServer
 
 <PageTitle>Yeni Destek Talebi - SoftDesk</PageTitle>
 
@@ -15,16 +16,6 @@
             </svg>
             Taleplerime Dön
         </a>
-    </div>
-</div>
-
-<!-- Debug Info -->
-<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
-    <div class="text-sm">
-        <p><strong>Debug:</strong> CurrentStep: @CurrentStep</p>
-        <p>SelectedTicketType: @(SelectedTicketType?.Name ?? "None")</p>
-        <p>SelectedCategory: @(SelectedCategory?.Name ?? "None")</p>
-        <p>CanProceed: @CanProceedToNextStep()</p>
     </div>
 </div>
 
@@ -76,11 +67,14 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @for (int i = 0; i < AvailableTicketTypes.Count; i++)
+                @{
+                    int typeIndex = 0;
+                }
+                @foreach (var ticketType in AvailableTicketTypes)
                 {
-                    var index = i;
-                    var ticketType = AvailableTicketTypes[index];
-                    <div class="@GetTicketTypeCardClass(ticketType) border-2 rounded-xl p-6 transition-all duration-200">
+                    var currentIndex = typeIndex++;
+                    <div class="@GetTicketTypeCardClass(ticketType) border-2 rounded-xl p-6 transition-all duration-200 cursor-pointer hover:shadow-lg"
+                         @onclick="@(() => HandleTicketTypeSelection(currentIndex))">
                         <div class="@GetTicketTypeIconClass(ticketType) rounded-xl flex items-center justify-center mb-4">
                             @((MarkupString)ticketType.Icon)
                         </div>
@@ -93,18 +87,15 @@
                             @ticketType.ResponseTime
                         </div>
 
-                        <button type="button"
-                                class="w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors @(SelectedTicketType?.Id == ticketType.Id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200")"
-                                @onclick="@(() => HandleTicketTypeSelect(index))">
-                            @if (SelectedTicketType?.Id == ticketType.Id)
-                            {
-                                <span>✓ Seçildi</span>
-                            }
-                            else
-                            {
-                                <span>Seç</span>
-                            }
-                        </button>
+                        @if (SelectedTicketType?.Id == ticketType.Id)
+                        {
+                            <div class="flex items-center justify-center text-blue-600 font-medium text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Seçildi
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -120,11 +111,14 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                @for (int i = 0; i < GetCategoriesForType(SelectedTicketType?.Id ?? 0).Count; i++)
+                @{
+                    int categoryIndex = 0;
+                }
+                @foreach (var category in GetCategoriesForType(SelectedTicketType?.Id ?? 0))
                 {
-                    var index = i;
-                    var category = GetCategoriesForType(SelectedTicketType?.Id ?? 0)[index];
-                    <div class="@GetCategoryCardClass(category) border-2 rounded-xl p-6 transition-all duration-200">
+                    var currentIndex = categoryIndex++;
+                    <div class="@GetCategoryCardClass(category) border-2 rounded-xl p-6 transition-all duration-200 cursor-pointer hover:shadow-lg"
+                         @onclick="@(() => HandleCategorySelection(currentIndex))">
                         <div class="flex items-center mb-4">
                             <div class="@GetCategoryIconClass(category) rounded-lg flex items-center justify-center mr-3">
                                 @((MarkupString)category.Icon)
@@ -150,18 +144,15 @@
                             </div>
                         }
 
-                        <button type="button"
-                                class="w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors @(SelectedCategory?.Id == category.Id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200")"
-                                @onclick="@(() => HandleCategorySelect(index))">
-                            @if (SelectedCategory?.Id == category.Id)
-                            {
-                                <span>✓ Seçildi</span>
-                            }
-                            else
-                            {
-                                <span>Seç</span>
-                            }
-                        </button>
+                        @if (SelectedCategory?.Id == category.Id)
+                        {
+                            <div class="flex items-center justify-center text-blue-600 font-medium text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Seçildi
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -180,14 +171,14 @@
                 <!-- Subject -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Konu Başlığı *</label>
-                    <input type="text" @bind="TicketSubject" placeholder="Asil yardımcı olabilirz?"
+                    <input type="text" @bind="TicketSubject" @bind:event="oninput" placeholder="Nasıl yardımcı olabiliriz?"
                            class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
 
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Detaylı Açıklama *</label>
-                    <textarea @bind="TicketDescription" rows="4" placeholder="Destek ihtiyacınızı detaylı şekilde açıklayın..."
+                    <textarea @bind="TicketDescription" @bind:event="oninput" rows="4" placeholder="Destek ihtiyacınızı detaylı şekilde açıklayın..."
                               class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
 
@@ -214,7 +205,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p class="text-sm text-gray-600 mb-1">
-                            <button class="text-blue-600 hover:text-blue-500 font-medium">Dosyaları Seç</button>
+                            <button type="button" class="text-blue-600 hover:text-blue-500 font-medium">Dosyaları Seç</button>
                             veya sürükle bırak
                         </p>
                         <p class="text-xs text-gray-500">JPG, PNG, PDF, DOC, TXT, ZIP (Maksimum 10MB)</p>
@@ -290,7 +281,7 @@
     <!-- Navigation Buttons -->
     <div class="border-t border-gray-200 px-8 py-6">
         <div class="flex items-center justify-between">
-            <button @onclick="PreviousStep"
+            <button type="button" @onclick="PreviousStep"
                     class="@(CurrentStep == 1 ? "invisible" : "") inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                 <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -300,7 +291,7 @@
 
             @if (CurrentStep < 4)
             {
-                <button @onclick="NextStep"
+                <button type="button" @onclick="NextStep"
                         disabled="@(!CanProceedToNextStep())"
                         class="@(CanProceedToNextStep() ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700" : "bg-gray-300 cursor-not-allowed") inline-flex items-center px-6 py-2 border border-transparent rounded-lg text-sm font-medium text-white shadow-sm transition-all duration-200">
                     Sonraki
@@ -311,7 +302,7 @@
             }
             else
             {
-                <button @onclick="CreateTicket"
+                <button type="button" @onclick="CreateTicket"
                         disabled="@(!CanCreateTicket())"
                         class="@(CanCreateTicket() ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700" : "bg-gray-300 cursor-not-allowed") inline-flex items-center px-6 py-2 border border-transparent rounded-lg text-sm font-medium text-white shadow-sm transition-all duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -422,12 +413,38 @@
     }
     #endregion
 
+    #region Selection Methods - TEMIZ VERSİYON
+    private void HandleTicketTypeSelection(int index)
+    {
+        if (index >= 0 && index < AvailableTicketTypes.Count)
+        {
+            var ticketType = AvailableTicketTypes[index];
+            SelectedTicketType = ticketType;
+            SelectedCategory = null; // Reset category when type changes
+            SelectedModule = "";
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleCategorySelection(int index)
+    {
+        var categories = GetCategoriesForType(SelectedTicketType?.Id ?? 0);
+        if (index >= 0 && index < categories.Count)
+        {
+            var category = categories[index];
+            SelectedCategory = category;
+            SelectedModule = "";
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    #endregion
+
     #region CSS Helper Methods
     private string GetTicketTypeCardClass(TicketTypeData ticketType)
     {
         return SelectedTicketType?.Id == ticketType.Id
             ? GetSelectedCardClass(ticketType.Color)
-            : "hover:bg-gray-50";
+            : "hover:bg-gray-50 border-gray-200";
     }
 
     private string GetTicketTypeIconClass(TicketTypeData ticketType)
@@ -443,8 +460,8 @@
     private string GetCategoryCardClass(CategoryData category)
     {
         return SelectedCategory?.Id == category.Id
-            ? "ring-2 ring-blue-500 bg-blue-50"
-            : "hover:bg-gray-50";
+            ? "ring-2 ring-blue-500 bg-blue-50 border-blue-200"
+            : "hover:bg-gray-50 border-gray-200";
     }
 
     private string GetCategoryIconClass(CategoryData category)
@@ -461,13 +478,13 @@
     {
         return color switch
         {
-            "orange" => "ring-2 ring-orange-500 bg-orange-50",
-            "gray" => "ring-2 ring-gray-500 bg-gray-50",
-            "teal" => "ring-2 ring-teal-500 bg-teal-50",
-            "red" => "ring-2 ring-red-500 bg-red-50",
-            "blue" => "ring-2 ring-blue-500 bg-blue-50",
-            "green" => "ring-2 ring-green-500 bg-green-50",
-            _ => "ring-2 ring-blue-500 bg-blue-50"
+            "orange" => "ring-2 ring-orange-500 bg-orange-50 border-orange-200",
+            "gray" => "ring-2 ring-gray-500 bg-gray-50 border-gray-200",
+            "teal" => "ring-2 ring-teal-500 bg-teal-50 border-teal-200",
+            "red" => "ring-2 ring-red-500 bg-red-50 border-red-200",
+            "blue" => "ring-2 ring-blue-500 bg-blue-50 border-blue-200",
+            "green" => "ring-2 ring-green-500 bg-green-50 border-green-200",
+            _ => "ring-2 ring-blue-500 bg-blue-50 border-blue-200"
         };
     }
 
@@ -550,38 +567,34 @@
     }
     #endregion
 
-    #region Navigation Methods - BASIT VE GARANTİLİ
-    private void NextStep()
+    #region Navigation Methods - TEMİZ VERSİYON
+    private async Task NextStep()
     {
-        Console.WriteLine($"NextStep called! Current: {CurrentStep}, CanProceed: {CanProceedToNextStep()}");
-
         if (CanProceedToNextStep() && CurrentStep < 4)
         {
             CurrentStep++;
-            Console.WriteLine($"Moved to step: {CurrentStep}");
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    private void PreviousStep()
+    private async Task PreviousStep()
     {
         if (CurrentStep > 1)
         {
             CurrentStep--;
-            Console.WriteLine($"Moved back to step: {CurrentStep}");
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private bool CanProceedToNextStep()
     {
-        var canProceed = CurrentStep switch
+        return CurrentStep switch
         {
             1 => SelectedTicketType != null,
             2 => SelectedCategory != null,
             3 => !string.IsNullOrWhiteSpace(TicketSubject) && !string.IsNullOrWhiteSpace(TicketDescription),
             _ => false
         };
-
-        return canProceed;
     }
 
     private bool CanCreateTicket()
@@ -590,46 +603,6 @@
                !string.IsNullOrWhiteSpace(TicketDescription) &&
                SelectedTicketType != null &&
                SelectedCategory != null;
-    }
-    #endregion
-
-    #region Selection Methods - BASIT VE GARANTİLİ
-    private void HandleTicketTypeSelect(int index)
-    {
-        Console.WriteLine($"BUTTON CLICKED! Index: {index}");
-
-        if (index >= 0 && index < AvailableTicketTypes.Count)
-        {
-            var ticketType = AvailableTicketTypes[index];
-            SelectedTicketType = ticketType;
-            SelectedCategory = null;
-            SelectedModule = "";
-
-            Console.WriteLine($"SUCCESS! Selected: {ticketType.Name}");
-        }
-        else
-        {
-            Console.WriteLine($"ERROR! Invalid index: {index}");
-        }
-    }
-
-    private void HandleCategorySelect(int index)
-    {
-        Console.WriteLine($"CATEGORY BUTTON CLICKED! Index: {index}");
-
-        var categories = GetCategoriesForType(SelectedTicketType?.Id ?? 0);
-        if (index >= 0 && index < categories.Count)
-        {
-            var category = categories[index];
-            SelectedCategory = category;
-            SelectedModule = "";
-
-            Console.WriteLine($"SUCCESS! Selected Category: {category.Name}");
-        }
-        else
-        {
-            Console.WriteLine($"ERROR! Invalid category index: {index}");
-        }
     }
     #endregion
 
@@ -646,9 +619,13 @@
         if (!CanCreateTicket()) return;
 
         Console.WriteLine($"Creating ticket: {TicketSubject}");
+
+        // Here you would typically save to database
+        // For now, just simulate success
         await Task.Delay(1000);
 
-        // Reset form or navigate
+        // Show success message or navigate to tickets list
+        // For demonstration, let's reset the form
         ResetForm();
     }
 

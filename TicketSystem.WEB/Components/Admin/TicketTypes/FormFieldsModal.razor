@@ -1,0 +1,411 @@
+﻿@* Form Fields Management Modal Component *@
+@if (ShowModal)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" @onclick="CloseModal"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <!-- Header -->
+                <div class="bg-white px-6 pt-6 border-b border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-slate-900">
+                            @TicketTypeName - Form Dizaynı
+                        </h3>
+                        <div class="flex items-center space-x-3">
+                            <button @onclick="AddNewField" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Yeni Alan
+                            </button>
+                            <button @onclick="CloseModal" class="text-slate-400 hover:text-slate-600">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="bg-white px-6 py-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                        <!-- Form Fields List -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-900 mb-4">Form Alanları (@FormFields.Count)</h4>
+
+                            @if (FormFields.Any())
+                            {
+                                <div class="space-y-3 max-h-96 overflow-y-auto">
+                                    @foreach (var field in FormFields.OrderBy(f => f.SortOrder))
+                                    {
+                                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 @(SelectedField?.Id == field.Id ? "ring-2 ring-blue-500 bg-blue-50" : "")"
+                                             @onclick="@(() => SelectField(field))">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center space-x-3">
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium @GetFieldTypeClass(field.FieldType)">
+                                                            @GetFieldTypeIcon(field.FieldType)
+                                                            @GetFieldTypeDisplayName(field.FieldType)
+                                                        </span>
+                                                        <h5 class="font-medium text-slate-900">@field.DisplayName</h5>
+                                                        @if (field.IsRequired)
+                                                        {
+                                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700">
+                                                                Zorunlu
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    <p class="text-sm text-slate-600 mt-1">@field.HelpText</p>
+                                                    <div class="flex items-center space-x-4 mt-2 text-xs text-slate-500">
+                                                        <span>Alan Adı: @field.FieldName</span>
+                                                        <span>Sıra: @field.SortOrder</span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    <button @onclick="@(() => EditField(field))" @onclick:stopPropagation="true" class="text-blue-600 hover:text-blue-800">
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </button>
+                                                    <button @onclick="@(() => DeleteField(field))" @onclick:stopPropagation="true" class="text-red-600 hover:text-red-800">
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-8">
+                                    <svg class="w-12 h-12 text-slate-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <h3 class="text-sm font-medium text-slate-900 mb-2">Henüz form alanı yok</h3>
+                                    <p class="text-sm text-slate-500">Bu ticket türü için form alanları ekleyin</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Field Editor -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-900 mb-4">
+                                @(IsEditMode ? "Alan Düzenle" : "Yeni Alan Ekle")
+                            </h4>
+
+                            @if (IsEditMode || ShowAddForm)
+                            {
+                                <div class="space-y-4">
+                                    <!-- Field Name -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Alan Adı (Technical) *</label>
+                                        <input type="text" @bind="CurrentField.FieldName" placeholder="error_description"
+                                               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                        <p class="text-xs text-slate-500 mt-1">Kod içinde kullanılacak alan adı (snake_case)</p>
+                                    </div>
+
+                                    <!-- Display Name -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Görünen Ad *</label>
+                                        <input type="text" @bind="CurrentField.DisplayName" placeholder="Hata Açıklaması"
+                                               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                    </div>
+
+                                    <!-- Field Type -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Alan Tipi *</label>
+                                        <select @bind="CurrentField.FieldType" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                            <option value="">Seçiniz</option>
+                                            <option value="text">Metin</option>
+                                            <option value="textarea">Çok Satırlı Metin</option>
+                                            <option value="select">Seçim Listesi</option>
+                                            <option value="checkbox">Onay Kutusu</option>
+                                            <option value="radio">Tek Seçim</option>
+                                            <option value="file">Dosya Yükleme</option>
+                                            <option value="number">Sayı</option>
+                                            <option value="email">E-posta</option>
+                                            <option value="date">Tarih</option>
+                                            <option value="url">Web Adresi</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Options (for select/radio) -->
+                                    @if (CurrentField.FieldType == "select" || CurrentField.FieldType == "radio")
+                                    {
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-2">Seçenekler</label>
+                                            <textarea @bind="CurrentField.Options" rows="4" placeholder='[{"value":"yes","text":"Evet"},{"value":"no","text":"Hayır"}]'
+                                                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"></textarea>
+                                            <p class="text-xs text-slate-500 mt-1">JSON format: [{"value":"deger","text":"Görünen Metin"}]</p>
+                                        </div>
+                                    }
+
+                                    <!-- Placeholder -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Placeholder Metni</label>
+                                        <input type="text" @bind="CurrentField.PlaceholderText" placeholder="Örnek: Hata detaylarını yazın..."
+                                               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                    </div>
+
+                                    <!-- Help Text -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Yardım Metni</label>
+                                        <input type="text" @bind="CurrentField.HelpText" placeholder="Bu alanla ilgili açıklama"
+                                               class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                    </div>
+
+                                    <!-- Validation -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-2">Min Uzunluk</label>
+                                            <input type="number" @bind="CurrentField.MinLength"
+                                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-2">Max Uzunluk</label>
+                                            <input type="number" @bind="CurrentField.MaxLength"
+                                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-2">Sıralama</label>
+                                            <input type="number" @bind="CurrentField.SortOrder"
+                                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                        </div>
+                                        <div class="flex items-center pt-8">
+                                            <label class="flex items-center">
+                                                <input type="checkbox" @bind="CurrentField.IsRequired" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                <span class="ml-2 text-sm text-slate-700">Zorunlu Alan</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+                                        <button @onclick="CancelEdit" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                                            İptal
+                                        </button>
+                                        <button @onclick="SaveField" disabled="@IsSaving" class="@(IsSaving ? "bg-slate-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700") px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white transition-colors">
+                                            @(IsSaving ? "Kaydediliyor..." : (IsEditMode ? "Güncelle" : "Kaydet"))
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-8">
+                                    <svg class="w-12 h-12 text-slate-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    <h3 class="text-sm font-medium text-slate-900 mb-2">Form alanı ekle</h3>
+                                    <p class="text-sm text-slate-500 mb-4">Soldan bir alan seçin veya yeni alan ekleyin</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-slate-50 px-6 py-4 flex items-center justify-between">
+                    <div class="text-sm text-slate-600">
+                        @FormFields.Count alan tanımlandı
+                    </div>
+                    <button @onclick="CloseModal" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                        Kapat
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool ShowModal { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string TicketTypeName { get; set; } = "";
+    [Parameter] public List<FormFieldData> FormFields { get; set; } = new();
+
+    private FormFieldData CurrentField = new();
+    private FormFieldData? SelectedField;
+    private bool IsEditMode = false;
+    private bool ShowAddForm = false;
+    private bool IsSaving = false;
+
+    private async Task CloseModal()
+    {
+        ShowModal = false;
+        await OnClose.InvokeAsync();
+    }
+
+    private void AddNewField()
+    {
+        CurrentField = new FormFieldData
+        {
+            SortOrder = (FormFields.LastOrDefault()?.SortOrder ?? 0) + 1
+        };
+        IsEditMode = false;
+        ShowAddForm = true;
+        SelectedField = null;
+    }
+
+    private void EditField(FormFieldData field)
+    {
+        CurrentField = new FormFieldData
+        {
+            Id = field.Id,
+            FieldName = field.FieldName,
+            DisplayName = field.DisplayName,
+            FieldType = field.FieldType,
+            IsRequired = field.IsRequired,
+            PlaceholderText = field.PlaceholderText,
+            HelpText = field.HelpText,
+            MinLength = field.MinLength,
+            MaxLength = field.MaxLength,
+            SortOrder = field.SortOrder,
+            Options = field.Options
+        };
+        IsEditMode = true;
+        ShowAddForm = true;
+        SelectedField = field;
+    }
+
+    private void SelectField(FormFieldData field)
+    {
+        SelectedField = field;
+        ShowAddForm = false;
+        IsEditMode = false;
+    }
+
+    private void CancelEdit()
+    {
+        ShowAddForm = false;
+        IsEditMode = false;
+        SelectedField = null;
+        CurrentField = new();
+    }
+
+    private async Task SaveField()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentField.FieldName) ||
+            string.IsNullOrWhiteSpace(CurrentField.DisplayName) ||
+            string.IsNullOrWhiteSpace(CurrentField.FieldType))
+            return;
+
+        IsSaving = true;
+        await Task.Delay(500); // Simulate API call
+
+        if (IsEditMode)
+        {
+            var existing = FormFields.FirstOrDefault(f => f.Id == CurrentField.Id);
+            if (existing != null)
+            {
+                existing.FieldName = CurrentField.FieldName;
+                existing.DisplayName = CurrentField.DisplayName;
+                existing.FieldType = CurrentField.FieldType;
+                existing.IsRequired = CurrentField.IsRequired;
+                existing.PlaceholderText = CurrentField.PlaceholderText;
+                existing.HelpText = CurrentField.HelpText;
+                existing.MinLength = CurrentField.MinLength;
+                existing.MaxLength = CurrentField.MaxLength;
+                existing.SortOrder = CurrentField.SortOrder;
+                existing.Options = CurrentField.Options;
+            }
+        }
+        else
+        {
+            CurrentField.Id = Guid.NewGuid();
+            FormFields.Add(CurrentField);
+        }
+
+        IsSaving = false;
+        CancelEdit();
+        StateHasChanged();
+    }
+
+    private async Task DeleteField(FormFieldData field)
+    {
+        FormFields.Remove(field);
+        if (SelectedField?.Id == field.Id)
+        {
+            SelectedField = null;
+        }
+        StateHasChanged();
+    }
+
+    private string GetFieldTypeDisplayName(string fieldType)
+    {
+        return fieldType switch
+        {
+            "text" => "Metin",
+            "textarea" => "Çok Satırlı Metin",
+            "select" => "Seçim Listesi",
+            "checkbox" => "Onay Kutusu",
+            "radio" => "Tek Seçim",
+            "file" => "Dosya Yükleme",
+            "number" => "Sayı",
+            "email" => "E-posta",
+            "date" => "Tarih",
+            "url" => "Web Adresi",
+            _ => fieldType
+        };
+    }
+
+    private string GetFieldTypeClass(string fieldType)
+    {
+        return fieldType switch
+        {
+            "text" => "bg-blue-100 text-blue-700",
+            "textarea" => "bg-green-100 text-green-700",
+            "select" => "bg-purple-100 text-purple-700",
+            "checkbox" => "bg-orange-100 text-orange-700",
+            "radio" => "bg-pink-100 text-pink-700",
+            "file" => "bg-indigo-100 text-indigo-700",
+            "number" => "bg-teal-100 text-teal-700",
+            "email" => "bg-red-100 text-red-700",
+            "date" => "bg-yellow-100 text-yellow-700",
+            "url" => "bg-cyan-100 text-cyan-700",
+            _ => "bg-slate-100 text-slate-700"
+        };
+    }
+
+    private string GetFieldTypeIcon(string fieldType)
+    {
+        return fieldType switch
+        {
+            "text" => "📝",
+            "textarea" => "📄",
+            "select" => "📋",
+            "checkbox" => "☑️",
+            "radio" => "🔘",
+            "file" => "📎",
+            "number" => "🔢",
+            "email" => "📧",
+            "date" => "📅",
+            "url" => "🔗",
+            _ => "❓"
+        };
+    }
+
+    public class FormFieldData
+    {
+        public Guid Id { get; set; }
+        public string FieldName { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string FieldType { get; set; } = "";
+        public bool IsRequired { get; set; }
+        public string? PlaceholderText { get; set; }
+        public string? HelpText { get; set; }
+        public int? MinLength { get; set; }
+        public int? MaxLength { get; set; }
+        public int SortOrder { get; set; }
+        public string? Options { get; set; }
+    }
+}
