@@ -1,4 +1,7 @@
 ﻿@page "/admin/ticket-types"
+@using System.Text.Json
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <PageTitle>Ticket Türleri Yönetimi - SoftDesk Admin</PageTitle>
@@ -8,7 +11,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-gray-900 mb-2">Ticket Türleri Yönetimi</h1>
-            <p class="text-gray-600">Ticket türlerini ve form alanlarını tanımlayın</p>
+            <p class="text-gray-600">Ticket türlerini ve dinamik form alanlarını tanımlayın</p>
         </div>
         <button @onclick="OpenCreateModal" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all duration-200">
             <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -19,342 +22,409 @@
     </div>
 </div>
 
-<!-- Ticket Types List -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    @foreach (var ticketType in TicketTypes)
-    {
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4" style="background-color: @ticketType.Color;">
-                        <span class="text-2xl">@ticketType.Icon</span>
+<!-- Loading State -->
+@if (IsLoading)
+{
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        @for (int i = 0; i < 4; i++)
+        {
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-200 rounded-xl mr-4"></div>
+                        <div>
+                            <div class="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                            <div class="h-3 bg-gray-200 rounded w-48"></div>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900">@ticketType.Name</h3>
-                        <p class="text-sm text-gray-600">@ticketType.Description</p>
-                    </div>
+                    <div class="h-6 bg-gray-200 rounded w-16"></div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(ticketType.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
-                        @(ticketType.IsActive ? "Aktif" : "Pasif")
-                    </span>
+                <div class="h-20 bg-gray-200 rounded mb-4"></div>
+                <div class="flex justify-end space-x-2">
+                    <div class="h-8 bg-gray-200 rounded w-16"></div>
+                    <div class="h-8 bg-gray-200 rounded w-16"></div>
                 </div>
             </div>
-
-            <!-- Form Fields Summary -->
-            <div class="mb-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Form Alanları (@ticketType.FormFields.Count)</h4>
-                <div class="flex flex-wrap gap-2">
-                    @foreach (var field in ticketType.FormFields.Take(3))
-                    {
-                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
-                            @field.DisplayName
+        }
+    </div>
+}
+else
+{
+    <!-- Ticket Types List -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        @foreach (var ticketType in TicketTypes)
+        {
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4" style="background-color: @ticketType.Color;">
+                            @((MarkupString)ticketType.Icon)
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">@ticketType.Name</h3>
+                            <p class="text-sm text-gray-600">@ticketType.Description</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(ticketType.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                            @(ticketType.IsActive ? "Aktif" : "Pasif")
                         </span>
-                    }
-                    @if (ticketType.FormFields.Count > 3)
-                    {
-                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
-                            +@(ticketType.FormFields.Count - 3) daha
-                        </span>
-                    }
+                        <div class="relative">
+                            <button @onclick="() => ToggleDropdown(ticketType.Id)" class="p-1 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
+                            </button>
+                            @if (OpenDropdownId == ticketType.Id)
+                            {
+                                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                    <div class="py-1">
+                                        <button @onclick="() => EditTicketType(ticketType)" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                            <svg class="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Düzenle
+                                        </button>
+                                        <button @onclick="() => ManageFormFields(ticketType)" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                            <svg class="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            Form Alanları
+                                        </button>
+                                        <hr class="my-1">
+                                        <button @onclick="() => ToggleStatus(ticketType)" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                            <svg class="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                            </svg>
+                                            @(ticketType.IsActive ? "Pasifleştir" : "Aktifleştir")
+                                        </button>
+                                        <button @onclick="() => ConfirmDelete(ticketType)" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                            <svg class="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Sil
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Actions -->
-            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div class="text-xs text-gray-500">
-                    Oluşturulma: @ticketType.CreatedAt.ToString("dd.MM.yyyy")
+                <!-- Form Preview -->
+                @if (ticketType.FormFields?.Any() == true)
+                {
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Dinamik Form Alanları:</h4>
+                        <div class="space-y-2">
+                            @foreach (var field in ticketType.FormFields.Take(3))
+                            {
+                                <div class="flex items-center text-xs text-gray-600">
+                                    <span class="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                                    <span class="font-medium">@field.Label</span>
+                                    <span class="ml-auto text-gray-500">(@GetFieldTypeText(field.Type))</span>
+                                </div>
+                            }
+                            @if (ticketType.FormFields.Count > 3)
+                            {
+                                <div class="text-xs text-gray-500 pl-4">
+                                    +@(ticketType.FormFields.Count - 3) alan daha...
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center text-sm text-yellow-800">
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Bu tip için henüz form alanı tanımlanmamış
+                        </div>
+                    </div>
+                }
+
+                <!-- Statistics -->
+                <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div class="flex items-center space-x-4">
+                        <span>@ticketType.TicketCount ticket</span>
+                        <span>•</span>
+                        <span>@(ticketType.FormFields?.Count ?? 0) form alanı</span>
+                    </div>
+                    <span>Sıra: @ticketType.SortOrder</span>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button @onclick="@(() => EditTicketType(ticketType))" class="inline-flex items-center px-3 py-1 border border-blue-300 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
-                        <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
+
+                <!-- Actions -->
+                <div class="flex justify-end space-x-2">
+                    <button @onclick="() => ManageFormFields(ticketType)" class="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors">
+                        Form Yönet
+                    </button>
+                    <button @onclick="() => EditTicketType(ticketType)" class="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                         Düzenle
                     </button>
-                    <button @onclick="@(() => ManageFormFields(ticketType))" class="inline-flex items-center px-3 py-1 border border-green-300 text-xs font-medium rounded-lg text-green-700 bg-green-50 hover:bg-green-100 transition-colors">
-                        <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Form Dizaynı
-                    </button>
-                    <button @onclick="@(() => ToggleStatus(ticketType))" class="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors">
-                        @(ticketType.IsActive ? "Pasifleştir" : "Aktifleştir")
-                    </button>
                 </div>
             </div>
+        }
+    </div>
+
+    <!-- Empty State -->
+    @if (!TicketTypes.Any())
+    {
+        <div class="text-center py-12">
+            <svg class="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Henüz ticket türü yok</h3>
+            <p class="text-gray-600 mb-4">İlk ticket türünüzü oluşturarak başlayın</p>
+            <button @onclick="OpenCreateModal" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                İlk Ticket Türünü Oluştur
+            </button>
         </div>
     }
-</div>
+}
 
 <!-- Create/Edit Modal -->
 @if (ShowModal)
 {
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @onclick="CloseModal"></div>
-
-            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-6 pt-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">
-                            @(IsEditMode ? "Ticket Türü Düzenle" : "Yeni Ticket Türü")
-                        </h3>
-                        <button @onclick="CloseModal" class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <!-- Name -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Türü Adı *</label>
-                            <input type="text" @bind="CurrentTicketType.Name" placeholder="Hata/Sorun Bildirimi"
-                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <!-- Description -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
-                            <textarea @bind="CurrentTicketType.Description" rows="3" placeholder="Bu ticket türünün ne için kullanıldığını açıklayın..."
-                                      class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                        </div>
-
-                        <!-- Icon & Color -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">İkon</label>
-                                <div class="grid grid-cols-5 gap-2">
-                                    @foreach (var icon in AvailableIcons)
-                                    {
-                                        <button type="button" @onclick="@(() => CurrentTicketType.Icon = icon)"
-                                                class="w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg hover:bg-gray-50 @(CurrentTicketType.Icon == icon ? "border-blue-500 bg-blue-50" : "border-gray-200")">
-                                            @icon
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Renk</label>
-                                <div class="grid grid-cols-4 gap-2">
-                                    @foreach (var color in AvailableColors)
-                                    {
-                                        <button type="button" @onclick="@(() => CurrentTicketType.Color = color.Value)"
-                                                class="w-10 h-10 rounded-lg border-2 @(CurrentTicketType.Color == color.Value ? "border-gray-800" : "border-gray-200")"
-                                                style="background-color: @color.Value" title="@color.Name">
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Preview -->
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="text-xs font-medium text-gray-500 mb-2">Önizleme:</p>
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-3" style="background-color: @CurrentTicketType.Color;">
-                                    <span class="text-2xl">@CurrentTicketType.Icon</span>
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold text-gray-900">@(!string.IsNullOrEmpty(CurrentTicketType.Name) ? CurrentTicketType.Name : "Ticket Türü Adı")</h4>
-                                    <p class="text-sm text-gray-600">@(!string.IsNullOrEmpty(CurrentTicketType.Description) ? CurrentTicketType.Description : "Açıklama buraya gelecek")</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sort Order -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Sıralama</label>
-                            <input type="number" @bind="CurrentTicketType.SortOrder"
-                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3">
-                    <button @onclick="CloseModal" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        İptal
-                    </button>
-                    <button @onclick="SaveTicketType" disabled="@IsSaving" class="@(IsSaving ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700") px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white transition-colors">
-                        @(IsSaving ? "Kaydediliyor..." : (IsEditMode ? "Güncelle" : "Kaydet"))
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold text-gray-900">
+                        @(IsEditMode ? "Ticket Türünü Düzenle" : "Yeni Ticket Türü")
+                    </h2>
+                    <button @onclick="CloseModal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
-}
 
-<!-- Form Fields Management Modal -->
-@if (ShowFormFieldsModal)
-{
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @onclick="CloseFormFieldsModal"></div>
+            <EditForm Model="@CurrentTicketType" OnValidSubmit="@SaveTicketType">
+                <DataAnnotationsValidator />
 
-            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-                <div class="bg-white px-6 pt-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">
-                            @SelectedTicketTypeForForm?.Name - Form Dizaynı
-                        </h3>
-                        <div class="flex items-center space-x-3">
-                            <button @onclick="AddNewFormField" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                Yeni Alan
-                            </button>
-                            <button @onclick="CloseFormFieldsModal" class="text-gray-400 hover:text-gray-600">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+                <div class="p-6 space-y-6">
+                    <!-- Basic Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Tür Adı <span class="text-red-500">*</span>
+                            </label>
+                            <InputText @bind-Value="CurrentTicketType.Name"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Örn: Hata/Sorun" />
+                            <ValidationMessage For="@(() => CurrentTicketType.Name)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Sıralama
+                            </label>
+                            <InputNumber @bind-Value="CurrentTicketType.SortOrder"
+                                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                         </div>
                     </div>
 
-                    <!-- Form Fields List -->
-                    <div class="space-y-4 max-h-96 overflow-y-auto">
-                        @if (SelectedTicketTypeForForm?.FormFields.Any() == true)
-                        {
-                            @foreach (var field in SelectedTicketTypeForForm.FormFields.OrderBy(f => f.SortOrder))
-                            {
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-4">
-                                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
-                                                    @GetFieldTypeDisplayName(field.FieldType)
-                                                </span>
-                                                <h4 class="font-medium text-gray-900">@field.DisplayName</h4>
-                                                @if (field.IsRequired)
-                                                {
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700">
-                                                        Zorunlu
-                                                    </span>
-                                                }
-                                            </div>
-                                            <p class="text-sm text-gray-600 mt-1">@field.HelpText</p>
-                                        </div>
-                                        <div class="flex items-center space-x-2">
-                                            <button @onclick="@(() => EditFormField(field))" class="text-blue-600 hover:text-blue-800">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </button>
-                                            <button @onclick="@(() => DeleteFormField(field))" class="text-red-600 hover:text-red-800">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Açıklama
+                        </label>
+                        <InputTextArea @bind-Value="CurrentTicketType.Description"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       rows="3"
+                                       placeholder="Bu türün ne için kullanılacağını açıklayın..." />
+                    </div>
+
+                    <!-- Icon & Color -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                İkon <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center border-2 border-gray-200"
+                                     style="background-color: @CurrentTicketType.Color;">
+                                    @((MarkupString)CurrentTicketType.Icon)
                                 </div>
+                                <div class="flex-1">
+                                    <InputText @bind-Value="CurrentTicketType.Icon"
+                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="SVG kodu veya emoji" />
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">SVG kodu veya emoji kullanabilirsiniz</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Renk <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex items-center space-x-3">
+                                <input type="color" @bind="CurrentTicketType.Color"
+                                       class="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer" />
+                                <InputText @bind-Value="CurrentTicketType.Color"
+                                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           placeholder="#3B82F6" />
+                            </div>
+                            <ValidationMessage For="@(() => CurrentTicketType.Color)" class="text-red-500 text-sm mt-1" />
+                        </div>
+                    </div>
+
+                    <!-- Quick Icon Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Hızlı İkon Seçimi</label>
+                        <div class="grid grid-cols-8 gap-2">
+                            @foreach (var icon in PredefinedIcons)
+                            {
+                                <button type="button" @onclick="() => SelectIcon(icon)"
+                                        class="w-10 h-10 rounded-lg border-2 @(CurrentTicketType.Icon == icon ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300") flex items-center justify-center text-lg transition-colors">
+                                    @((MarkupString)icon)
+                                </button>
                             }
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center">
+                        <label class="flex items-center">
+                            <InputCheckbox @bind-Value="CurrentTicketType.IsActive" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                            <span class="ml-2 text-sm text-gray-700">Aktif</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" @onclick="CloseModal"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        İptal
+                    </button>
+                    <button type="submit" disabled="@IsSaving"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                        @if (IsSaving)
+                        {
+                            <div class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Kaydediliyor...
+                            </div>
                         }
                         else
                         {
-                            <div class="text-center py-8">
-                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <h3 class="text-sm font-medium text-gray-900 mb-2">Henüz form alanı yok</h3>
-                                <p class="text-sm text-gray-500">Bu ticket türü için form alanları ekleyin</p>
-                            </div>
+                            <span>@(IsEditMode ? "Güncelle" : "Oluştur")</span>
                         }
-                    </div>
+                    </button>
                 </div>
-            </div>
+            </EditForm>
         </div>
     </div>
 }
 
 @code {
-    private List<TicketTypeData> TicketTypes = new();
+    private List<TicketTypeViewModel> TicketTypes = new();
+    private TicketTypeViewModel CurrentTicketType = new();
     private bool ShowModal = false;
-    private bool ShowFormFieldsModal = false;
     private bool IsEditMode = false;
+    private bool IsLoading = true;
     private bool IsSaving = false;
-    private TicketTypeData CurrentTicketType = new();
-    private TicketTypeData? SelectedTicketTypeForForm;
+    private Guid? OpenDropdownId = null;
 
-    private readonly List<string> AvailableIcons = new()
+    private readonly List<string> PredefinedIcons = new()
     {
-        "🐛", "⭐", "📚", "🔧", "💡", "📋", "🎯", "🚀", "💬", "📊",
-        "🔍", "⚙️", "📝", "🎨", "🔐", "📱", "💻", "🌐", "📈", "🎭"
+        "🐛", "⚡", "📋", "🔧", "📊", "💡", "🚀", "⚙️",
+        "📝", "🎯", "📈", "🔍", "💻", "📱", "🌐", "🔒"
     };
 
-    private readonly List<ColorOption> AvailableColors = new()
+    protected override async Task OnInitializedAsync()
     {
-        new("Mavi", "#3b82f6"),
-        new("Kırmızı", "#ef4444"),
-        new("Yeşil", "#10b981"),
-        new("Sarı", "#f59e0b"),
-        new("Mor", "#8b5cf6"),
-        new("Pembe", "#ec4899"),
-        new("Turuncu", "#f97316"),
-        new("Gri", "#6b7280")
-    };
-
-    protected override void OnInitialized()
-    {
-        LoadTicketTypes();
+        await LoadTicketTypes();
     }
 
-    private void LoadTicketTypes()
+    private async Task LoadTicketTypes()
     {
-        // Sample data - normally would come from API
-        TicketTypes = new List<TicketTypeData>
+        IsLoading = true;
+        try
         {
-            new TicketTypeData
+            // Simulated data - replace with actual API call
+            await Task.Delay(1000);
+            TicketTypes = new List<TicketTypeViewModel>
             {
-                Id = Guid.NewGuid(),
-                Name = "Hata/Sorun Bildirimi",
-                Description = "Sistem hataları ve teknik sorunlar için acil destek",
-                Icon = "🐛",
-                Color = "#ef4444",
-                IsActive = true,
-                SortOrder = 1,
-                CreatedAt = DateTime.Now.AddDays(-5),
-                FormFields = new List<FormFieldData>
+                new TicketTypeViewModel
                 {
-                    new FormFieldData { DisplayName = "Hata Açıklaması", FieldType = "textarea", IsRequired = true },
-                    new FormFieldData { DisplayName = "Ekran Görüntüsü", FieldType = "file", IsRequired = false },
-                    new FormFieldData { DisplayName = "Hata Tekrar Ediyor mu?", FieldType = "select", IsRequired = true }
-                }
-            },
-            new TicketTypeData
-            {
-                Id = Guid.NewGuid(),
-                Name = "Yeni Özellik Talebi",
-                Description = "Sistem geliştirme ve yeni özellik talepleri",
-                Icon = "⭐",
-                Color = "#3b82f6",
-                IsActive = true,
-                SortOrder = 2,
-                CreatedAt = DateTime.Now.AddDays(-3),
-                FormFields = new List<FormFieldData>
+                    Id = Guid.NewGuid(),
+                    Name = "Hata/Sorun",
+                    Description = "Sistemde karşılaşılan hatalar ve sorunlar",
+                    Icon = "🐛",
+                    Color = "#ef4444",
+                    SortOrder = 1,
+                    IsActive = true,
+                    TicketCount = 45,
+                    FormFields = new List<FormFieldViewModel>
+                    {
+                        new FormFieldViewModel { Label = "Hata Detayı", Type = "textarea" },
+                        new FormFieldViewModel { Label = "Hata Mesajı", Type = "text" },
+                        new FormFieldViewModel { Label = "Etki Seviyesi", Type = "select" }
+                    }
+                },
+                new TicketTypeViewModel
                 {
-                    new FormFieldData { DisplayName = "Özellik Açıklaması", FieldType = "textarea", IsRequired = true },
-                    new FormFieldData { DisplayName = "İş Önceliği", FieldType = "select", IsRequired = true }
+                    Id = Guid.NewGuid(),
+                    Name = "Yeni Özellik",
+                    Description = "Sisteme eklenmesi istenen yeni özellikler",
+                    Icon = "⚡",
+                    Color = "#10b981",
+                    SortOrder = 2,
+                    IsActive = true,
+                    TicketCount = 23,
+                    FormFields = new List<FormFieldViewModel>
+                    {
+                        new FormFieldViewModel { Label = "Özellik Açıklaması", Type = "textarea" },
+                        new FormFieldViewModel { Label = "Beklenen Fayda", Type = "text" },
+                        new FormFieldViewModel { Label = "Aciliyet", Type = "select" }
+                    }
+                },
+                new TicketTypeViewModel
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Danışmanlık/Eğitim",
+                    Description = "Sistem kullanımı hakkında eğitim ve danışmanlık",
+                    Icon = "📋",
+                    Color = "#3b82f6",
+                    SortOrder = 3,
+                    IsActive = true,
+                    TicketCount = 12,
+                    FormFields = null
                 }
-            }
-        };
+            };
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"Veriler yüklenirken hata: {ex.Message}", "error");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
-    #region Modal Operations
     private void OpenCreateModal()
     {
-        CurrentTicketType = new TicketTypeData { Color = "#3b82f6", Icon = "📋" };
+        CurrentTicketType = new TicketTypeViewModel { Color = "#3b82f6", SortOrder = TicketTypes.Count + 1, IsActive = true };
         IsEditMode = false;
         ShowModal = true;
+        OpenDropdownId = null;
     }
 
-    private void EditTicketType(TicketTypeData ticketType)
+    private void EditTicketType(TicketTypeViewModel ticketType)
     {
-        CurrentTicketType = new TicketTypeData
+        CurrentTicketType = new TicketTypeViewModel
         {
             Id = ticketType.Id,
             Name = ticketType.Name,
@@ -366,127 +436,167 @@
         };
         IsEditMode = true;
         ShowModal = true;
+        OpenDropdownId = null;
     }
 
     private void CloseModal()
     {
         ShowModal = false;
-        CurrentTicketType = new();
+        CurrentTicketType = new TicketTypeViewModel();
+        IsEditMode = false;
     }
 
     private async Task SaveTicketType()
     {
-        if (string.IsNullOrWhiteSpace(CurrentTicketType.Name)) return;
-
         IsSaving = true;
-        await Task.Delay(1000); // Simulate API call
-
-        if (IsEditMode)
+        try
         {
-            var existing = TicketTypes.FirstOrDefault(t => t.Id == CurrentTicketType.Id);
-            if (existing != null)
+            // Simulate API call
+            await Task.Delay(1500);
+
+            if (IsEditMode)
             {
-                existing.Name = CurrentTicketType.Name;
-                existing.Description = CurrentTicketType.Description;
-                existing.Icon = CurrentTicketType.Icon;
-                existing.Color = CurrentTicketType.Color;
-                existing.SortOrder = CurrentTicketType.SortOrder;
+                var existing = TicketTypes.FirstOrDefault(t => t.Id == CurrentTicketType.Id);
+                if (existing != null)
+                {
+                    existing.Name = CurrentTicketType.Name;
+                    existing.Description = CurrentTicketType.Description;
+                    existing.Icon = CurrentTicketType.Icon;
+                    existing.Color = CurrentTicketType.Color;
+                    existing.SortOrder = CurrentTicketType.SortOrder;
+                    existing.IsActive = CurrentTicketType.IsActive;
+                }
+                await JSRuntime.InvokeVoidAsync("showToast", "Ticket türü güncellendi", "success");
+            }
+            else
+            {
+                CurrentTicketType.Id = Guid.NewGuid();
+                TicketTypes.Add(CurrentTicketType);
+                await JSRuntime.InvokeVoidAsync("showToast", "Yeni ticket türü oluşturuldu", "success");
+            }
+
+            CloseModal();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"İşlem sırasında hata: {ex.Message}", "error");
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private void SelectIcon(string icon)
+    {
+        CurrentTicketType.Icon = icon;
+    }
+
+    private void ToggleDropdown(Guid ticketTypeId)
+    {
+        OpenDropdownId = OpenDropdownId == ticketTypeId ? null : ticketTypeId;
+    }
+
+    private async Task ToggleStatus(TicketTypeViewModel ticketType)
+    {
+        try
+        {
+            ticketType.IsActive = !ticketType.IsActive;
+            await JSRuntime.InvokeVoidAsync("showToast",
+                $"Ticket türü {(ticketType.IsActive ? "aktifleştirildi" : "pasifleştirildi")}", "success");
+            OpenDropdownId = null;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"Durum değiştirilirken hata: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ConfirmDelete(TicketTypeViewModel ticketType)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            $"'{ticketType.Name}' türünü silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz ve bu türdeki tüm ticket'lar etkilenebilir.");
+
+        if (confirmed)
+        {
+            try
+            {
+                TicketTypes.Remove(ticketType);
+                await JSRuntime.InvokeVoidAsync("showToast", "Ticket türü silindi", "success");
+                OpenDropdownId = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("showToast", $"Silme işlemi sırasında hata: {ex.Message}", "error");
             }
         }
-        else
-        {
-            CurrentTicketType.Id = Guid.NewGuid();
-            CurrentTicketType.CreatedAt = DateTime.Now;
-            CurrentTicketType.IsActive = true;
-            TicketTypes.Add(CurrentTicketType);
-        }
-
-        IsSaving = false;
-        CloseModal();
-        StateHasChanged();
     }
 
-    private async Task ToggleStatus(TicketTypeData ticketType)
+    private void ManageFormFields(TicketTypeViewModel ticketType)
     {
-        ticketType.IsActive = !ticketType.IsActive;
-        await Task.Delay(500); // Simulate API call
-        StateHasChanged();
-    }
-    #endregion
-
-    #region Form Fields Management
-    private void ManageFormFields(TicketTypeData ticketType)
-    {
-        SelectedTicketTypeForForm = ticketType;
-        ShowFormFieldsModal = true;
+        // Form fields management modal will be implemented
+        JSRuntime.InvokeVoidAsync("showToast", "Form alanları yönetimi geliştirilecek", "info");
+        OpenDropdownId = null;
     }
 
-    private void CloseFormFieldsModal()
+    private string GetFieldTypeText(string type)
     {
-        ShowFormFieldsModal = false;
-        SelectedTicketTypeForForm = null;
-    }
-
-    private void AddNewFormField()
-    {
-        // TODO: Open form field creation modal
-        Console.WriteLine("Add new form field");
-    }
-
-    private void EditFormField(FormFieldData field)
-    {
-        // TODO: Open form field edit modal
-        Console.WriteLine($"Edit form field: {field.DisplayName}");
-    }
-
-    private void DeleteFormField(FormFieldData field)
-    {
-        // TODO: Confirm and delete form field
-        Console.WriteLine($"Delete form field: {field.DisplayName}");
-    }
-
-    private string GetFieldTypeDisplayName(string fieldType)
-    {
-        return fieldType switch
+        return type switch
         {
             "text" => "Metin",
             "textarea" => "Çok Satırlı Metin",
             "select" => "Seçim Listesi",
+            "radio" => "Radyo Buton",
             "checkbox" => "Onay Kutusu",
-            "file" => "Dosya Yükleme",
             "number" => "Sayı",
-            "email" => "E-posta",
             "date" => "Tarih",
-            _ => fieldType
+            "email" => "E-posta",
+            "file" => "Dosya",
+            _ => type
         };
     }
-    #endregion
 
-    #region Models
-    public class TicketTypeData
+    // Click outside to close dropdown
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.relative')) {
+                        DotNet.invokeMethodAsync('TicketSystem.WEB', 'CloseAllDropdowns');
+                    }
+                });
+            ");
+        }
+    }
+
+    [JSInvokable]
+    public static void CloseAllDropdowns()
+    {
+        // This would be implemented to close dropdowns
+    }
+
+    // Model Classes
+    public class TicketTypeViewModel
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
-        public string Icon { get; set; } = "📋";
-        public string Color { get; set; } = "#3b82f6";
+        public string Icon { get; set; } = "";
+        public string Color { get; set; } = "";
         public int SortOrder { get; set; }
-        public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; }
-        public List<FormFieldData> FormFields { get; set; } = new();
+        public bool IsActive { get; set; }
+        public int TicketCount { get; set; }
+        public List<FormFieldViewModel>? FormFields { get; set; }
     }
 
-    public class FormFieldData
+    public class FormFieldViewModel
     {
-        public Guid Id { get; set; }
-        public string FieldName { get; set; } = "";
-        public string DisplayName { get; set; } = "";
-        public string FieldType { get; set; } = "";
-        public bool IsRequired { get; set; }
-        public string? HelpText { get; set; }
-        public int SortOrder { get; set; }
+        public string Label { get; set; } = "";
+        public string Type { get; set; } = "";
     }
-
-    public record ColorOption(string Name, string Value);
-    #endregion
 }

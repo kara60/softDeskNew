@@ -1,13 +1,73 @@
-﻿@page "/admin/settings"
+﻿@page "/admin"
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
-<PageTitle>Tanım Merkezi - SoftDesk Admin</PageTitle>
+<PageTitle>Admin Tanım Merkezi - SoftDesk</PageTitle>
 
 <!-- Page Header -->
 <div class="mb-8">
     <div>
-        <h1 class="text-2xl font-semibold text-gray-900 mb-2">Tanım Merkezi</h1>
+        <h1 class="text-2xl font-semibold text-gray-900 mb-2">Admin Tanım Merkezi</h1>
         <p class="text-gray-600">Sistem tanımlarını ve ayarlarını bu merkezden yönetebilirsiniz</p>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Ticket Türleri</p>
+                <p class="text-2xl font-bold text-gray-900">@TicketTypesCount</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Kategoriler</p>
+                <p class="text-2xl font-bold text-gray-900">@CategoriesCount</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Kullanıcılar</p>
+                <p class="text-2xl font-bold text-gray-900">@UsersCount</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-600">Firmalar</p>
+                <p class="text-2xl font-bold text-gray-900">@CompaniesCount</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -111,7 +171,7 @@
             <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">@SystemSettingsCount ayar</span>
         </div>
         <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-gray-600 transition-colors">Sistem Ayarları</h3>
-        <p class="text-sm text-gray-600 mb-4">PMO entegrasyonu ve genel sistem ayarları</p>
+        <p class="text-sm text-gray-600 mb-4">E-posta, güvenlik ve genel sistem ayarları</p>
         <div class="flex items-center text-xs text-gray-600 group-hover:text-gray-700">
             <span>Yönetmeye Git</span>
             <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -120,83 +180,66 @@
         </div>
     </div>
 
-    <!-- Raporlama -->
+    <!-- Ticket Yönetimi -->
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-200 cursor-pointer group"
-         @onclick="@(() => NavigateToPage("/admin/reports"))">
+         @onclick="@(() => NavigateToPage("/admin/tickets"))">
         <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+            <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
                 <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2V7a2 2 0 012-2h2a2 2 0 002 2v2a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 00-2 2h-2a2 2 0 00-2 2v6a2 2 0 01-2 2H9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
             </div>
-            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Raporlar</span>
+            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">@ActiveTicketsCount aktif</span>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">Raporlama</h3>
-        <p class="text-sm text-gray-600 mb-4">Detaylı sistem raporları ve analizleri</p>
-        <div class="flex items-center text-xs text-indigo-600 group-hover:text-indigo-700">
+        <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">Ticket Yönetimi</h3>
+        <p class="text-sm text-gray-600 mb-4">Gelen talepleri yönetin ve durumlarını güncelleyin</p>
+        <div class="flex items-center text-xs text-red-600 group-hover:text-red-700">
             <span>Yönetmeye Git</span>
             <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
         </div>
     </div>
-
-</div>
-
-<!-- Quick Stats -->
-<div class="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">Sistem Özeti</h3>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center">
-            <div class="text-2xl font-bold text-blue-600">@TotalTickets</div>
-            <div class="text-sm text-gray-600">Toplam Ticket</div>
-        </div>
-        <div class="text-center">
-            <div class="text-2xl font-bold text-green-600">@ActiveUsers</div>
-            <div class="text-sm text-gray-600">Aktif Kullanıcı</div>
-        </div>
-        <div class="text-center">
-            <div class="text-2xl font-bold text-orange-600">@ActiveCompanies</div>
-            <div class="text-sm text-gray-600">Aktif Firma</div>
-        </div>
-        <div class="text-center">
-            <div class="text-2xl font-bold text-purple-600">@PendingTickets</div>
-            <div class="text-sm text-gray-600">Bekleyen Onay</div>
-        </div>
-    </div>
 </div>
 
 <!-- Recent Activity -->
-<div class="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">Son Aktiviteler</h3>
-    <div class="space-y-3">
-        @foreach (var activity in RecentActivities)
-        {
-            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div class="w-8 h-8 @activity.IconColor rounded-full flex items-center justify-center mr-3">
-                    @((MarkupString)activity.Icon)
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-900">@activity.Description</p>
-                    <p class="text-xs text-gray-500">@activity.Time</p>
-                </div>
+<div class="mt-12">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900">Son Aktiviteler</h3>
+            <p class="text-sm text-gray-600">Sistemdeki son değişiklikler ve işlemler</p>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                @foreach (var activity in RecentActivities)
+                {
+                    <div class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 @activity.IconColor rounded-full flex items-center justify-center">
+                                @((MarkupString)activity.Icon)
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">@activity.Description</p>
+                            <p class="text-xs text-gray-500 mt-1">@activity.Time</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="text-xs text-gray-400">@activity.Time</span>
+                        </div>
+                    </div>
+                }
             </div>
-        }
+        </div>
     </div>
 </div>
 
 @code {
-    // Stats
-    private int TicketTypesCount = 5;
-    private int CategoriesCount = 8;
-    private int UsersCount = 24;
-    private int CompaniesCount = 12;
-    private int SystemSettingsCount = 15;
-
-    private int TotalTickets = 156;
-    private int ActiveUsers = 24;
-    private int ActiveCompanies = 12;
-    private int PendingTickets = 8;
+    private int TicketTypesCount = 6;
+    private int CategoriesCount = 12;
+    private int UsersCount = 47;
+    private int CompaniesCount = 8;
+    private int SystemSettingsCount = 24;
+    private int ActiveTicketsCount = 18;
 
     private List<ActivityData> RecentActivities = new();
 
@@ -211,7 +254,7 @@
         {
             new ActivityData
             {
-                Description = "Yeni ticket türü oluşturuldu: 'Acil Destek'",
+                Description = "Yeni ticket türü oluşturuldu: 'Acil Teknik Destek'",
                 Time = "2 dakika önce",
                 Icon = @"<svg class=""w-4 h-4 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 6v6m0 0v6m0-6h6m-6 0H6"" /></svg>",
                 IconColor = "bg-blue-500"
@@ -225,21 +268,31 @@
             },
             new ActivityData
             {
+                Description = "ERP Sistemi kategorisine 'Üretim Planlama' modülü eklendi",
+                Time = "32 dakika önce",
+                Icon = @"<svg class=""w-4 h-4 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"" /></svg>",
+                IconColor = "bg-purple-500"
+            },
+            new ActivityData
+            {
                 Description = "PMO entegrasyonu ayarları güncellendi",
                 Time = "1 saat önce",
                 Icon = @"<svg class=""w-4 h-4 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"" /></svg>",
                 IconColor = "bg-orange-500"
+            },
+            new ActivityData
+            {
+                Description = "TEKNOS MAKİNA şirket bilgileri güncellendi",
+                Time = "2 saat önce",
+                Icon = @"<svg class=""w-4 h-4 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"" /></svg>",
+                IconColor = "bg-indigo-500"
             }
         };
     }
 
     private void NavigateToPage(string url)
     {
-        // Navigation logic will be implemented
-        Console.WriteLine($"Navigating to: {url}");
-
-        // For now, you can use this for navigation:
-        // NavigationManager.NavigateTo(url);
+        Navigation.NavigateTo(url);
     }
 
     public class ActivityData

@@ -1,357 +1,305 @@
-﻿@* @page "/admin/dashboard"
-@rendermode InteractiveServer
+﻿@page "/admin/dashboard"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Admin Dashboard - SoftDesk</PageTitle>
-
-<!-- Page Header -->
-<div class="mb-8">
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-semibold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p class="text-gray-600">Tüm müşterilerin ticket istatistikleri ve özeti</p>
-        </div>
-        <div class="flex items-center space-x-3">
-            <button @onclick="RefreshData" disabled="@IsRefreshing" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                @if (IsRefreshing)
-                {
-                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    
-                }
-                else
-                {
-                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                 
-                }
-            </button>
-            <select @bind="SelectedTimeRange" @onchange="FilterByTimeRange" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="today">Bugün</option>
-                <option value="week">Bu Hafta</option>
-                <option value="month">Bu Ay</option>
-                <option value="quarter">Bu Çeyrek</option>
-                <option value="year">Bu Yıl</option>
-                <option value="all">Tüm Zamanlar</option>
-            </select>
-        </div>
-    </div>
-</div>
-
-<!-- Summary Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Total Tickets -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                </div>
-                <p class="text-3xl font-bold text-gray-900 mb-1">@TotalStats.TotalTickets</p>
-                <p class="text-sm text-gray-600 mb-1">Toplam Ticket</p>
-                <p class="text-xs text-blue-600 font-medium flex items-center">
-                    @if (TotalStats.TicketGrowth >= 0)
-                    {
-                        <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 14l9-9 3 3L7 20l-4-4z" />
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="p-3 bg-blue-100 rounded-xl">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v3m0 4h4m4 0h4m-4 4h4m-4 4h4m-4-8h4m-4 4h4" />
                         </svg>
-                        <span>+@TotalStats.TicketGrowth%</span>
-                    }
-                    else
-                    {
-                        <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l-9-9-3 3 12 12 4-4z" />
-                        </svg>
-                        <span>@TotalStats.TicketGrowth%</span>
-                    }
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pending Tickets -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <p class="text-3xl font-bold text-gray-900 mb-1">@TotalStats.PendingTickets</p>
-                <p class="text-sm text-gray-600 mb-1">Bekleyen Onay</p>
-                <p class="text-xs text-orange-600 font-medium">Dikkat gerekli</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Active Companies -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                </div>
-                <p class="text-3xl font-bold text-gray-900 mb-1">@TotalStats.ActiveCompanies</p>
-                <p class="text-sm text-gray-600 mb-1">Aktif Firma</p>
-                <p class="text-xs text-green-600 font-medium">Büyüme devam ediyor</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Resolution Rate -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <p class="text-3xl font-bold text-gray-900 mb-1">%@TotalStats.ResolutionRate</p>
-                <p class="text-sm text-gray-600 mb-1">Çözüm Oranı</p>
-                <p class="text-xs text-purple-600 font-medium">Hedefin üzerinde</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts Row -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Ticket Trend Chart -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">Ticket Trendi</h3>
-            <select @bind="ChartTimeRange" class="text-sm border border-gray-300 rounded-lg px-3 py-1">
-                <option value="7">Son 7 Gün</option>
-                <option value="30">Son 30 Gün</option>
-                <option value="90">Son 3 Ay</option>
-            </select>
-        </div>
-        <div class="h-64 flex items-center justify-center">
-            <!-- Simulated Chart -->
-            <div class="w-full h-full bg-gradient-to-t from-blue-50 to-transparent rounded-lg flex items-end justify-around px-4 pb-4">
-                @for (int i = 0; i < 7; i++)
-                {
-                    var height = Random.Shared.Next(20, 90);
-                    <div class="bg-blue-500 rounded-t-lg transition-all duration-300 hover:bg-blue-600 flex items-end justify-center"
-                         style="width: 40px; height: @(height)%; min-height: 20px;">
-                        <span class="text-xs text-white mb-2">@Random.Shared.Next(5, 25)</span>
                     </div>
-                }
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                        <p class="text-gray-600 mt-1">Tüm müşterilerin ticket istatistikleri ve özeti</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">Son güncelleme</p>
+                        <p class="text-sm font-medium text-gray-900">@DateTime.Now.ToString("dd.MM.yyyy HH:mm")</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Status Distribution -->
-    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 class="text-lg font-semibold text-gray-900 mb-6">Durum Dağılımı</h3>
-        <div class="space-y-4">
-            @foreach (var status in StatusDistribution)
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            @foreach (var stat in OverviewStats)
             {
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 rounded-full mr-3" style="background-color: @status.Color"></div>
-                        <span class="text-sm font-medium text-gray-900">@status.Name</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">@status.Count</span>
-                        <div class="w-20 bg-gray-200 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all duration-300" 
-                                 style="width: @status.Percentage%; background-color: @status.Color"></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 mb-1">@stat.Title</p>
+                            <p class="text-3xl font-bold text-gray-900">@stat.Value</p>
+                            @if (!string.IsNullOrEmpty(stat.Subtitle))
+                            {
+                                <p class="text-xs text-gray-500 mt-1">@stat.Subtitle</p>
+                            }
                         </div>
-                        <span class="text-xs text-gray-500 w-10">%@status.Percentage</span>
+                        <div class="p-3 rounded-lg @stat.IconBgClass">
+                            @((MarkupString)stat.Icon)
+                        </div>
                     </div>
                 </div>
             }
         </div>
-    </div>
-</div>
 
-<!-- Companies Performance -->
-<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-    <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-semibold text-gray-900">Müşteri Performansı</h3>
-        <button @onclick="@(() => ShowAllCompanies = !ShowAllCompanies)" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-            @(ShowAllCompanies ? "Daha Az Göster" : "Tümünü Göster")
-        </button>
-    </div>
-    
-    <div class="overflow-x-auto">
-        <table class="min-w-full">
-            <thead>
-                <tr class="border-b border-gray-200">
-                    <th class="text-left py-3 px-4 font-medium text-gray-700">Firma</th>
-                    <th class="text-center py-3 px-4 font-medium text-gray-700">Toplam Ticket</th>
-                    <th class="text-center py-3 px-4 font-medium text-gray-700">Bekleyen</th>
-                    <th class="text-center py-3 px-4 font-medium text-gray-700">Çözülen</th>
-                    <th class="text-center py-3 px-4 font-medium text-gray-700">Başarı Oranı</th>
-                    <th class="text-center py-3 px-4 font-medium text-gray-700">Son Aktivite</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @foreach (var company in (ShowAllCompanies ? CompanyStats : CompanyStats.Take(5)))
-                {
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-4 px-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-br @company.ColorGradient rounded-lg flex items-center justify-center mr-3">
-                                    <span class="text-sm font-bold text-white">@company.Initials</span>
-                                </div>
-                                <div>
-                                    <div class="font-medium text-gray-900">@company.Name</div>
-                                    <div class="text-sm text-gray-500">@company.ContactPerson</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <span class="text-lg font-semibold text-gray-900">@company.TotalTickets</span>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                @company.PendingTickets
-                            </span>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                @company.ResolvedTickets
-                            </span>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <div class="flex items-center justify-center">
-                                <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                                    <div class="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                                         style="width: @company.SuccessRate%"></div>
-                                </div>
-                                <span class="text-sm font-medium text-gray-900">%@company.SuccessRate</span>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-center text-sm text-gray-500">
-                            @company.LastActivity
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Recent Activities -->
-<div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-    <h3 class="text-lg font-semibold text-gray-900 mb-6">Son Aktiviteler</h3>
-    <div class="space-y-4">
-        @foreach (var activity in RecentActivities)
-        {
-            <div class="flex items-start space-x-3">
-                <div class="w-8 h-8 @activity.IconColor rounded-full flex items-center justify-center flex-shrink-0">
-                    @((MarkupString)activity.Icon)
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900">@activity.Title</p>
-                    <p class="text-sm text-gray-600">@activity.Description</p>
-                    <p class="text-xs text-gray-500 mt-1">@activity.TimeAgo</p>
-                </div>
-                <div class="flex-shrink-0">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @activity.StatusClass">
-                        @activity.Status
-                    </span>
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Ticket Status Distribution -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Durum Dağılımı</h3>
+                <div class="relative">
+                    <canvas id="statusChart" width="400" height="300"></canvas>
                 </div>
             </div>
-        }
-    </div>
-    
-    <div class="mt-6 text-center">
-        <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-            Tüm Aktiviteleri Görüntüle
-        </button>
+
+            <!-- Category Distribution -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Kategori Bazlı Dağılım</h3>
+                <div class="relative">
+                    <canvas id="categoryChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Performance Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Müşteri Performansları</h3>
+                <p class="text-sm text-gray-600 mt-1">Müşterilerin ticket istatistikleri ve performans göstergeleri</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Toplam Ticket</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bekleyen</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Çözülen</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Başarı Oranı</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Son Aktivite</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var company in CompanyPerformances)
+                        {
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-12 w-12">
+                                            <div class="h-12 w-12 rounded-full bg-gradient-to-r @company.ColorGradient flex items-center justify-center">
+                                                <span class="text-white font-bold text-sm">@company.Initials</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">@company.Name</div>
+                                            <div class="text-sm text-gray-500">@company.ContactPerson</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-gray-900">@company.TotalTickets</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        @company.PendingTickets
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        @company.ResolvedTickets
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="text-sm font-medium text-gray-900">@company.SuccessRate%</div>
+                                        <div class="ml-2 w-16 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: @(company.SuccessRate)%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    @company.LastActivity
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-3">Detaylar</button>
+                                    <button class="text-gray-600 hover:text-gray-900">Raporlar</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Hızlı İşlemler</h3>
+                <p class="text-sm text-gray-600 mt-1">Yakın zamandaki sistem aktiviteleri</p>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    @foreach (var activity in RecentActivities)
+                    {
+                        <div class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 @activity.IconColor rounded-full flex items-center justify-center">
+                                    @((MarkupString)activity.Icon)
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-gray-900">@activity.Title</p>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @activity.StatusClass">
+                                        @activity.Status
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1">@activity.Description</p>
+                                <p class="text-xs text-gray-500 mt-2">@activity.TimeAgo</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @code {
-    private string SelectedTimeRange = "month";
-    private string ChartTimeRange = "30";
-    private bool ShowAllCompanies = false;
-    private bool IsRefreshing = false;
-
-    private DashboardStats TotalStats = new();
-    private List<StatusData> StatusDistribution = new();
-    private List<CompanyPerformance> CompanyStats = new();
+    private List<StatData> OverviewStats = new();
+    private List<CompanyPerformance> CompanyPerformances = new();
     private List<ActivityData> RecentActivities = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        LoadDashboardData();
+        LoadSampleData();
+        await Task.Delay(100); // DOM yüklenmesini bekle
     }
 
-    private void LoadDashboardData()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Total Stats
-        TotalStats = new DashboardStats
+        if (firstRender)
         {
-            TotalTickets = 2847,
-            PendingTickets = 156,
-            ActiveCompanies = 47,
-            ResolutionRate = 94.2m,
-            TicketGrowth = 12.5m
+            await Task.Delay(500); // Sayfanın tam yüklenmesini bekle
+            await InitializeCharts();
+        }
+    }
+
+    private async Task InitializeCharts()
+    {
+        try
+        {
+            // Status Chart
+            await JSRuntime.InvokeVoidAsync("createDoughnutChart", "statusChart", new
+            {
+                labels = new[] { "Bekleyen", "İşlemde", "Çözüldü", "Kapalı" },
+                data = new[] { 8, 5, 10, 2 },
+                colors = new[] { "#fbbf24", "#3b82f6", "#10b981", "#6b7280" }
+            });
+
+            // Category Chart
+            await JSRuntime.InvokeVoidAsync("createBarChart", "categoryChart", new
+            {
+                labels = new[] { "Hata/Sorun", "Yeni Özellik", "Danışmanlık/Eğitim", "Bakım/Güncelleme" },
+                data = new[] { 12, 8, 3, 2 },
+                colors = new[] { "#ef4444", "#10b981", "#f59e0b", "#6b7280" }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chart initialization error: {ex.Message}");
+        }
+    }
+
+    private void LoadSampleData()
+    {
+        // Overview Stats
+        OverviewStats = new List<StatData>
+        {
+            new StatData
+            {
+                Title = "Toplam Ticket",
+                Value = "25",
+                Subtitle = "",
+                Icon = @"<svg class=""w-6 h-6 text-blue-600"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"" /></svg>",
+                IconBgClass = "bg-blue-100"
+            },
+            new StatData
+            {
+                Title = "İnceleniyor",
+                Value = "8",
+                Subtitle = "",
+                Icon = @"<svg class=""w-6 h-6 text-yellow-600"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"" /></svg>",
+                IconBgClass = "bg-yellow-100"
+            },
+            new StatData
+            {
+                Title = "İşlemde",
+                Value = "5",
+                Subtitle = "",
+                Icon = @"<svg class=""w-6 h-6 text-blue-600"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"" /></svg>",
+                IconBgClass = "bg-blue-100"
+            },
+            new StatData
+            {
+                Title = "Çözüldü",
+                Value = "10",
+                Subtitle = "1.40 oran",
+                Icon = @"<svg class=""w-6 h-6 text-green-600"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"" /></svg>",
+                IconBgClass = "bg-green-100"
+            },
+            new StatData
+            {
+                Title = "Kapalı",
+                Value = "2",
+                Subtitle = "",
+                Icon = @"<svg class=""w-6 h-6 text-gray-600"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"" /></svg>",
+                IconBgClass = "bg-gray-100"
+            }
         };
 
-        // Status Distribution
-        StatusDistribution = new List<StatusData>
+        // Company Performances
+        CompanyPerformances = new List<CompanyPerformance>
         {
-            new StatusData { Name = "Bekleyen", Count = 156, Percentage = 18, Color = "#f59e0b" },
-            new StatusData { Name = "İşlemde", Count = 234, Percentage = 27, Color = "#3b82f6" },
-            new StatusData { Name = "Çözüldü", Count = 321, Percentage = 37, Color = "#10b981" },
-            new StatusData { Name = "Kapandı", Count = 156, Percentage = 18, Color = "#6b7280" }
-        };
-
-        // Company Performance
-        CompanyStats = new List<CompanyPerformance>
-        {
+            new CompanyPerformance
+            {
+                Name = "SOYBAŞ DEMİR SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+                ContactPerson = "Mehmet Soybaş",
+                Initials = "SD",
+                ColorGradient = "from-blue-500 to-blue-600",
+                TotalTickets = 89,
+                PendingTickets = 8,
+                ResolvedTickets = 72,
+                SuccessRate = 95,
+                LastActivity = "2 dakika önce"
+            },
             new CompanyPerformance
             {
                 Name = "BANAT FIRÇA VE PLASTİK SAN. A.Ş.",
-                ContactPerson = "Mehmet Banat",
+                ContactPerson = "Ayşe Banat",
                 Initials = "BF",
-                ColorGradient = "from-blue-500 to-blue-600",
-                TotalTickets = 234,
-                PendingTickets = 12,
-                ResolvedTickets = 198,
-                SuccessRate = 96,
-                LastActivity = "2 saat önce"
-            },
-            new CompanyPerformance
-            {
-                Name = "SOYBAŞ DEMİR SANAYİ VE TİCARET A.Ş.",
-                ContactPerson = "Ali Soybaş",
-                Initials = "SD",
                 ColorGradient = "from-green-500 to-green-600",
-                TotalTickets = 189,
-                PendingTickets = 8,
-                ResolvedTickets = 167,
-                SuccessRate = 94,
-                LastActivity = "5 saat önce"
+                TotalTickets = 234,
+                PendingTickets = 23,
+                ResolvedTickets = 198,
+                SuccessRate = 91,
+                LastActivity = "1 saat önce"
             },
             new CompanyPerformance
             {
-                Name = "NURTEKS",
-                ContactPerson = "Fatma Nur",
-                Initials = "NT",
-                ColorGradient = "from-purple-500 to-purple-600",
-                TotalTickets = 78,
-                PendingTickets = 3,
-                ResolvedTickets = 71,
-                SuccessRate = 97,
-                LastActivity = "1 gün önce"
-            },
-            new CompanyPerformance
-            {
-                Name = "TEKNİK MAKİNA LTD. ŞTİ.",
+                Name = "TEKNOS MAKİNA SANAYİ LTD. ŞTİ.",
                 ContactPerson = "Ahmet Teknik",
                 Initials = "TM",
                 ColorGradient = "from-orange-500 to-orange-600",
@@ -401,58 +349,34 @@
             new ActivityData
             {
                 Title = "Yeni kullanıcı eklendi",
-                Description = "NURTEKS - Fatma Kaya (Muhasebe)",
+                Description = "TEKNOS MAKİNA - Fatma Yılmaz sisteme eklendi",
                 TimeAgo = "1 saat önce",
                 Icon = @"<svg class=""w-4 h-4 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"" /></svg>",
                 IconColor = "bg-purple-500",
-                Status = "Aktif",
+                Status = "Tamamlandı",
                 StatusClass = "bg-purple-100 text-purple-800"
             },
             new ActivityData
             {
-                Title = "PMO entegrasyonu test edildi",
-                Description = "Sistem ayarları güncellendi",
-                TimeAgo = "2 saat önce",
-                Icon = @"<svg class=""w-4 h-4 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"" /></svg>",
-                IconColor = "bg-orange-500",
-                Status = "Başarılı",
-                StatusClass = "bg-orange-100 text-orange-800"
+                Title = "Sistem bakımı tamamlandı",
+                Description = "Planlı bakım çalışması başarıyla tamamlandı",
+                TimeAgo = "3 saat önce",
+                Icon = @"<svg class=""w-4 h-4 text-white"" fill=""none"" viewBox=""0 0 24 24"" stroke=""currentColor""><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"" /><path stroke-linecap=""round"" stroke-linejoin=""round"" stroke-width=""2"" d=""M15 12a3 3 0 11-6 0 3 3 0 016 0z"" /></svg>",
+                IconColor = "bg-gray-500",
+                Status = "Bakım",
+                StatusClass = "bg-gray-100 text-gray-800"
             }
         };
     }
 
-    private async Task RefreshData()
+    // Model classes
+    public class StatData
     {
-        IsRefreshing = true;
-        await Task.Delay(1500); // Simulate data refresh
-        LoadDashboardData();
-        IsRefreshing = false;
-        StateHasChanged();
-    }
-
-    private void FilterByTimeRange()
-    {
-        // Implement time range filtering logic
-        Console.WriteLine($"Filtering by: {SelectedTimeRange}");
-        // Reload data based on selected time range
-    }
-
-    #region Models
-    public class DashboardStats
-    {
-        public int TotalTickets { get; set; }
-        public int PendingTickets { get; set; }
-        public int ActiveCompanies { get; set; }
-        public decimal ResolutionRate { get; set; }
-        public decimal TicketGrowth { get; set; }
-    }
-
-    public class StatusData
-    {
-        public string Name { get; set; } = "";
-        public int Count { get; set; }
-        public int Percentage { get; set; }
-        public string Color { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Subtitle { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string IconBgClass { get; set; } = "";
     }
 
     public class CompanyPerformance
@@ -478,5 +402,4 @@
         public string Status { get; set; } = "";
         public string StatusClass { get; set; } = "";
     }
-    #endregion
-} *@
+}
