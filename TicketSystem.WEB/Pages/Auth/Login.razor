@@ -1,0 +1,628 @@
+﻿@* Components/Pages/Login.razor *@
+@page "/login"
+@* @layout Components.Layout.EmptyLayout *@
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@using TicketSystem.WEB.Services
+@using TicketSystem.WEB.Services.Interfaces
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>SoftDesk - Giriş Yap</PageTitle>
+
+<div class="login-container">
+    <div class="left-side">
+        <div class="logo">
+            <i class="fas fa-ticket-alt"></i>
+            SoftDesk
+        </div>
+        <div class="subtitle">
+            Modern Ticket Yönetim Sistemi
+        </div>
+        <p class="description">
+            Hızlı, güvenli ve kullanıcı dostu destek platformu. Tüm taleplerinizi tek noktadan kolayca yönetin.
+        </p>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="feature-content">
+                    <h3>Veri Güvenliği</h3>
+                    <p>256-bit SSL & SOC2 uyumlu</p>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="feature-content">
+                    <h3>100+ Kurumsal</h3>
+                    <p>Türkiye'nin lider markaları</p>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="feature-content">
+                    <h3>7/24 Destek</h3>
+                    <p>Her an yanınızda</p>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="feature-content">
+                    <h3>Kolay Entegrasyon</h3>
+                    <p>API ve hazır entegrasyonlar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-side">
+        <div class="login-header">
+            <h2>Giriş Yap</h2>
+            <p>Hesabınıza erişmek için bilgilerinizi girin</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                @errorMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="success-message">
+                <i class="fas fa-check-circle"></i>
+                @successMessage
+            </div>
+        }
+
+        <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i>
+                    Kullanıcı Adı
+                </label>
+                <InputText @bind-Value="loginModel.Username" class="form-control"
+                           placeholder="Kullanıcı adınızı giriniz" />
+                <ValidationMessage For="() => loginModel.Username" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i>
+                    Şifre
+                </label>
+                <div class="input-container">
+                    <InputText type="@passwordInputType" @bind-Value="loginModel.Password"
+                               class="form-control" placeholder="••••••••" />
+                    <i class="fas @passwordToggleIcon password-toggle" @onclick="TogglePasswordVisibility"></i>
+                </div>
+                <ValidationMessage For="() => loginModel.Password" />
+            </div>
+
+            <div class="remember-forgot">
+                <div class="checkbox-group">
+                    <InputCheckbox @bind-Value="loginModel.RememberMe" />
+                    <label>Beni hatırla</label>
+                </div>
+                <a href="#" class="forgot-link">Şifremi unuttum</a>
+            </div>
+
+            <button type="submit" class="login-btn @(isLoading ? "loading" : "")" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <div class="loading-spinner"></div>
+                }
+                else
+                {
+                    <span>
+                        <i class="fas fa-sign-in-alt"></i>
+                        Giriş Yap
+                    </span>
+                }
+            </button>
+        </EditForm>
+
+        <div class="help-section">
+            <div class="help-text">Yardıma mı ihtiyacınız var?</div>
+            <div class="contact-links">
+                <a href="tel:02121234567" class="contact-link">
+                    <i class="fas fa-phone"></i>
+                    0212 123 45 67
+                </a>
+                <a href="mailto:destek@softeconomics.com" class="contact-link">
+                    <i class="fas fa-envelope"></i>
+                    destek@softeconomics.com
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .login-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        max-width: 1200px;
+        width: 100%;
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        min-height: 600px;
+    }
+
+    .left-side {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .left-side::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: scale(1.5);
+        }
+
+    .logo {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        z-index: 1;
+        position: relative;
+    }
+
+        .logo i {
+            margin-right: 10px;
+        }
+
+    .subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+        z-index: 1;
+        position: relative;
+    }
+
+    .description {
+        margin-bottom: 3rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
+
+    .features {
+        z-index: 1;
+        position: relative;
+    }
+
+    .feature {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        opacity: 0.9;
+    }
+
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        backdrop-filter: blur(10px);
+    }
+
+    .feature-content h3 {
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+        font-weight: 600;
+    }
+
+    .feature-content p {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    .right-side {
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+        .login-header h2 {
+            color: #1f2937;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+            .form-group label i {
+                margin-right: 8px;
+                color: #4f46e5;
+            }
+
+    .input-container {
+        position: relative;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6b7280;
+        transition: color 0.3s ease;
+    }
+
+        .password-toggle:hover {
+            color: #4f46e5;
+        }
+
+    .remember-forgot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+    }
+
+        .checkbox-group input {
+            margin-right: 8px;
+            accent-color: #4f46e5;
+        }
+
+        .checkbox-group label {
+            font-size: 0.9rem;
+            color: #374151;
+            margin: 0;
+        }
+
+    .forgot-link {
+        color: #4f46e5;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+        .forgot-link:hover {
+            color: #7c3aed;
+        }
+
+    .login-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    .help-section {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .help-text {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .contact-links {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .contact-link {
+        color: #4f46e5;
+        text-decoration: none;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: color 0.3s ease;
+    }
+
+        .contact-link:hover {
+            color: #7c3aed;
+        }
+
+    .error-message {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .success-message {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #166534;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .validation-message {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    @@media (max-width: 768px) {
+        .login-container
+
+    {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+    }
+
+    .left-side {
+        order: 2;
+        padding: 40px 30px;
+        min-height: 300px;
+    }
+
+    .right-side {
+        order: 1;
+        padding: 40px 30px;
+    }
+
+    .features {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .feature {
+        margin-bottom: 0;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .feature-icon {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+
+    }
+</style>
+
+@code {
+    private LoginModel loginModel = new();
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+    private string passwordInputType = "password";
+    private string passwordToggleIcon = "fa-eye";
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Kullanıcı adı gereklidir")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Şifre gereklidir")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; } = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Eğer kullanıcı zaten giriş yapmışsa dashboard'a yönlendir
+        if (await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        if (passwordInputType == "password")
+        {
+            passwordInputType = "text";
+            passwordToggleIcon = "fa-eye-slash";
+        }
+        else
+        {
+            passwordInputType = "password";
+            passwordToggleIcon = "fa-eye";
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(
+                loginModel.Username,
+                loginModel.Password,
+                loginModel.RememberMe
+            );
+
+            if (result.Success)
+            {
+                successMessage = "Giriş başarılı, yönlendiriliyorsunuz...";
+
+                // 1.5 saniye bekle ve yönlendir
+                await Task.Delay(1500);
+
+                // Kullanıcının rolüne göre yönlendirme
+                var user = await AuthService.GetCurrentUserAsync();
+                if (user != null && user.Roles.Contains("Admin"))
+                {
+                    Navigation.NavigateTo("/admin/dashboard");
+                }
+                else
+                {
+                    Navigation.NavigateTo("/dashboard");
+                }
+            }
+            else
+            {
+                errorMessage = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Bir hata oluştu. Lütfen tekrar deneyin.";
+            Console.WriteLine($"Login error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

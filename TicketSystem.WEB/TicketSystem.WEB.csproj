@@ -7,7 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Shared\" />
+    <Compile Remove="Components\Shared\**" />
+    <Content Remove="Components\Shared\**" />
+    <EmbeddedResource Remove="Components\Shared\**" />
+    <None Remove="Components\Shared\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Common\" />
+    <Folder Include="Components\Forms\" />
+    <Folder Include="Models\DTOs\Auth\" />
+    <Folder Include="Models\DTOs\Tickets\" />
+    <Folder Include="Models\DTOs\Users\" />
+    <Folder Include="Models\Enums\" />
+    <Folder Include="Models\ViewModels\" />
   </ItemGroup>
 
 </Project>
