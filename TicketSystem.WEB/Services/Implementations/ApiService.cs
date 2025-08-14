@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿// Services/Implementations/ApiService.cs
+using System.Text.Json;
 using TicketSystem.WEB.Services.Interfaces;
 
 namespace TicketSystem.WEB.Services.Implementations
@@ -30,12 +31,14 @@ namespace TicketSystem.WEB.Services.Implementations
                     return JsonSerializer.Deserialize<T>(json, _jsonOptions);
                 }
 
-                return default;
+                // Log error for debugging
+                Console.WriteLine($"API GET Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+                return default(T);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"API GET Error: {ex.Message}");
-                return default;
+                Console.WriteLine($"API GET Exception: {ex.Message}");
+                return default(T);
             }
         }
 
@@ -54,12 +57,14 @@ namespace TicketSystem.WEB.Services.Implementations
                     return JsonSerializer.Deserialize<T>(responseJson, _jsonOptions);
                 }
 
-                return default;
+                // Log error for debugging
+                Console.WriteLine($"API POST Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+                return default(T);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"API POST Error: {ex.Message}");
-                return default;
+                Console.WriteLine($"API POST Exception: {ex.Message}");
+                return default(T);
             }
         }
 
@@ -78,12 +83,12 @@ namespace TicketSystem.WEB.Services.Implementations
                     return JsonSerializer.Deserialize<T>(responseJson, _jsonOptions);
                 }
 
-                return default;
+                return default(T);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"API PUT Error: {ex.Message}");
-                return default;
+                Console.WriteLine($"API PUT Exception: {ex.Message}");
+                return default(T);
             }
         }
 
@@ -96,7 +101,7 @@ namespace TicketSystem.WEB.Services.Implementations
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"API DELETE Error: {ex.Message}");
+                Console.WriteLine($"API DELETE Exception: {ex.Message}");
                 return false;
             }
         }
@@ -116,7 +121,7 @@ namespace TicketSystem.WEB.Services.Implementations
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"API FILE POST Error: {ex.Message}");
+                Console.WriteLine($"API FILE POST Exception: {ex.Message}");
                 return null;
             }
         }

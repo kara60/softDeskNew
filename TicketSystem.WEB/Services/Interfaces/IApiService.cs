@@ -1,6 +1,4 @@
-﻿// Services/IApiService.cs
-using System.Text.Json;
-
+﻿// Services/Interfaces/IApiService.cs
 namespace TicketSystem.WEB.Services.Interfaces
 {
     public interface IApiService

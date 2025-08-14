@@ -17,11 +17,9 @@ builder.Services.AddHttpClient("TicketAPI", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-// Custom Services - Artýk bunlarý aktif ediyoruz
+// Custom Services
 builder.Services.AddScoped<IApiService, ApiService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ITicketService, TicketService>();
-//builder.Services.AddScoped<IFileService, FileService>(); // Bu sonra eklenecek
 
 // Session and State Management
 builder.Services.AddDistributedMemoryCache();
@@ -33,7 +31,7 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
-// Authorization - Authentication middleware'larý kullanmýyoruz, sadece cascading state
+// Authorization
 builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
@@ -51,10 +49,6 @@ app.UseAntiforgery();
 
 // Session middleware
 app.UseSession();
-
-// Authentication & Authorization middleware'larýný kaldýrýyoruz
-// app.UseAuthentication();
-// app.UseAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
